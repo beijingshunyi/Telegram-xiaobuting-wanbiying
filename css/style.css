@@ -114,8 +114,8 @@ body::before {
 
 .header {
     background: rgba(255,255,255,0.95);
-    border-radius: 12px;
-    padding: 0.8rem;
+    border-radius: 10px;
+    padding: 0.6rem;
     margin-bottom: 1rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     display: flex;
@@ -130,11 +130,11 @@ body::before {
 }
 
 .user-avatar {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     overflow: hidden;
-    border: 3px solid #667eea;
+    border: 2px solid #667eea;
 }
 
 .user-avatar img {
@@ -145,12 +145,12 @@ body::before {
 
 .username {
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #333;
 }
 
 .user-level {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #666;
 }
 
@@ -165,16 +165,16 @@ body::before {
 .coin-count {
     background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
     color: #2d3436;
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
+    padding: 0.3rem 0.6rem;
+    border-radius: 10px;
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 0.2rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 120px;
+    min-width: 100px;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .coin-icon {
@@ -250,7 +250,10 @@ body::before {
 .game-modes {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-bottom: 2rem;
+    width: 100%;
+    text-align: center;
 }
 
 .game-mode-btn {
@@ -264,6 +267,8 @@ body::before {
     box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
     backdrop-filter: blur(10px);
     max-width: 280px;
+    margin: 0 auto;
+    width: fit-content;
 }
 
 .game-mode-btn:hover {

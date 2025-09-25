@@ -14,7 +14,7 @@ class DatabaseManager {
             await this.ensureTablesExist();
 
             this.isInitialized = true;
-            console.log('Database initialized successfully');
+            console.log('Database initialized successfully with tables:', Array.from(this.db.objectStoreNames));
         } catch (error) {
             console.error('Failed to initialize database:', error);
             // 降级到localStorage
@@ -25,7 +25,7 @@ class DatabaseManager {
 
     initIndexedDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('XiaoButingWanBiYing', 1);
+            const request = indexedDB.open('XiaoButingWanBiYing', 2);
 
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -70,6 +70,26 @@ class DatabaseManager {
                     inviteStore.createIndex('inviterId', 'inviterId', { unique: false });
                     inviteStore.createIndex('inviteeId', 'inviteeId', { unique: true });
                 }
+
+                // 成就记录表
+                if (!db.objectStoreNames.contains('achievements')) {
+                    const achievementStore = db.createObjectStore('achievements', { keyPath: 'id', autoIncrement: true });
+                    achievementStore.createIndex('userId', 'userId', { unique: false });
+                    achievementStore.createIndex('achievementId', 'achievementId', { unique: false });
+                }
+
+                // 排行榜记录表
+                if (!db.objectStoreNames.contains('leaderboard')) {
+                    const leaderboardStore = db.createObjectStore('leaderboard', { keyPath: 'id', autoIncrement: true });
+                    leaderboardStore.createIndex('userId', 'userId', { unique: false });
+                    leaderboardStore.createIndex('period', 'period', { unique: false });
+                    leaderboardStore.createIndex('score', 'score', { unique: false });
+                }
+
+                // 设置/配置表
+                if (!db.objectStoreNames.contains('settings')) {
+                    const settingsStore = db.createObjectStore('settings', { keyPath: 'key' });
+                }
             };
         });
     }
@@ -78,7 +98,7 @@ class DatabaseManager {
     async ensureTablesExist() {
         if (!this.db) return;
 
-        const requiredStores = ['users', 'gameRecords', 'checkinRecords', 'withdrawalRecords', 'inviteRelations'];
+        const requiredStores = ['users', 'gameRecords', 'checkinRecords', 'withdrawalRecords', 'inviteRelations', 'achievements', 'leaderboard', 'settings'];
         const existingStores = Array.from(this.db.objectStoreNames);
 
         for (const storeName of requiredStores) {

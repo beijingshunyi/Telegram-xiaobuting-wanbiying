@@ -69,29 +69,34 @@ class GameEngine {
         // 获取设备像素比，解决模糊问题
         const devicePixelRatio = window.devicePixelRatio || 1;
 
-        // 优化画布大小，使其更大更适合手机端
-        const containerWidth = Math.min(containerRect.width - 20, 450);
-        const containerHeight = Math.min(containerRect.height - 20, 450);
-        const maxSize = Math.min(containerWidth, containerHeight);
+        // 优化画布大小，确保游戏板完整显示
+        const containerWidth = Math.min(containerRect.width - 40, 400);
+        const containerHeight = Math.min(containerRect.height - 40, 600);
+
+        // 确保画布是正方形且足够大
+        const canvasSize = Math.max(320, Math.min(containerWidth, containerHeight * 0.8));
 
         // 设置实际显示大小
-        this.canvas.style.width = maxSize + 'px';
-        this.canvas.style.height = maxSize + 'px';
+        this.canvas.style.width = canvasSize + 'px';
+        this.canvas.style.height = canvasSize + 'px';
 
         // 设置实际像素大小（考虑设备像素比）
-        this.canvas.width = maxSize * devicePixelRatio;
-        this.canvas.height = maxSize * devicePixelRatio;
+        this.canvas.width = canvasSize * devicePixelRatio;
+        this.canvas.height = canvasSize * devicePixelRatio;
 
         // 缩放画布上下文以适应设备像素比
         this.ctx.scale(devicePixelRatio, devicePixelRatio);
 
-        this.cellSize = Math.max(35, maxSize / this.gridSize); // 增加最小cell大小
+        // 计算合适的格子大小，确保8x8网格完整显示
+        this.cellSize = Math.floor(canvasSize / this.gridSize);
 
         // 设置画布样式
         this.canvas.style.cursor = 'pointer';
         this.canvas.style.borderRadius = '15px';
         this.canvas.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
         this.canvas.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        this.canvas.style.display = 'block';
+        this.canvas.style.margin = '0 auto';
 
         // 启用更好的渲染
         this.ctx.imageSmoothingEnabled = true;
@@ -362,6 +367,11 @@ class GameEngine {
                 this.objectives[startType].current++;
             }
 
+            // 同时更新游戏目标系统
+            if (window.gameObjectives) {
+                window.gameObjectives.updateProgress(startType, 1);
+            }
+
             this.grid[cell.row][cell.col] = BLOCK_TYPES.EMPTY;
             this.createParticles(cell.col * this.cellSize + this.cellSize / 2,
                                cell.row * this.cellSize + this.cellSize / 2);
@@ -552,6 +562,11 @@ class GameEngine {
                     this.objectives[match.type].current++;
                 }
 
+                // 同时更新游戏目标系统
+                if (window.gameObjectives) {
+                    window.gameObjectives.updateProgress(match.type, 1);
+                }
+
                 this.grid[match.row][match.col] = BLOCK_TYPES.EMPTY;
                 this.createParticles(match.col * this.cellSize + this.cellSize / 2,
                                    match.row * this.cellSize + this.cellSize / 2);
@@ -697,8 +712,12 @@ class GameEngine {
     }
 
     render() {
+        // 获取实际画布尺寸
+        const canvasSize = Math.min(this.canvas.width / (window.devicePixelRatio || 1),
+                                   this.canvas.height / (window.devicePixelRatio || 1));
+
         // 清空画布
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, canvasSize, canvasSize);
 
         // 绘制背景
         this.drawBackground();
@@ -724,29 +743,31 @@ class GameEngine {
     }
 
     drawBackground() {
-        const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+        const canvasSize = this.cellSize * this.gridSize;
+        const gradient = this.ctx.createLinearGradient(0, 0, canvasSize, canvasSize);
         gradient.addColorStop(0, '#f8f9fa');
         gradient.addColorStop(1, '#e9ecef');
 
         this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, canvasSize, canvasSize);
     }
 
     drawGrid() {
         this.ctx.strokeStyle = '#dee2e6';
         this.ctx.lineWidth = 1;
+        const gridSize = this.cellSize * this.gridSize;
 
         for (let row = 0; row <= this.gridSize; row++) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, row * this.cellSize);
-            this.ctx.lineTo(this.canvas.width, row * this.cellSize);
+            this.ctx.lineTo(gridSize, row * this.cellSize);
             this.ctx.stroke();
         }
 
         for (let col = 0; col <= this.gridSize; col++) {
             this.ctx.beginPath();
             this.ctx.moveTo(col * this.cellSize, 0);
-            this.ctx.lineTo(col * this.cellSize, this.canvas.height);
+            this.ctx.lineTo(col * this.cellSize, gridSize);
             this.ctx.stroke();
         }
     }
@@ -803,10 +824,11 @@ class GameEngine {
         const fruitData = FRUIT_DATA[blockType];
         if (!fruitData) return;
 
-        const fontSize = Math.max(16, this.cellSize * 0.5);
-        this.ctx.font = `${fontSize}px Apple Color Emoji, Segoe UI Emoji, sans-serif`;
+        const fontSize = Math.max(20, this.cellSize * 0.6);
+        this.ctx.font = `${fontSize}px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
+        this.ctx.fillStyle = 'black';
 
         // 绘制水果表情
         this.ctx.fillText(fruitData.emoji, centerX, centerY);
@@ -1149,7 +1171,7 @@ class GameEngine {
         }
 
         // 检查目标是否完成
-        if (this.checkObjectivesCompleted()) {
+        if (this.checkObjectivesCompleted() || (window.gameObjectives && window.gameObjectives.currentObjectives.every(obj => obj.completed))) {
             this.gameState = 'completed';
             this.onLevelComplete();
         }
@@ -1349,6 +1371,11 @@ class GameEngine {
         this.selectedCell = null;
         this.particles = [];
         this.gameState = 'playing';
+
+        // 初始化游戏目标系统
+        if (window.gameObjectives) {
+            window.gameObjectives.initLevel(this.level);
+        }
 
         // 初始化游戏目标
         this.initializeObjectives();
