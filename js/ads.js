@@ -89,8 +89,8 @@ class AdsManager {
             {
                 id: 'default_1',
                 type: 'image',
-                title: '万花楼汽车维修服务',
-                description: '专业汽车维修，值得信赖！',
+                title: '消不停·万必赢',
+                description: '本游戏由"北京修车【万花楼】"赞助，开发@bjxc010 合作联系@bjxc010',
                 imageUrl: 'images/ads/car-repair-ad.jpg',
                 linkUrl: 'https://t.me/bjxc010',
                 sponsor: CONFIG.COPYRIGHT.SPONSOR,

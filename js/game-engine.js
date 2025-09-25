@@ -115,15 +115,18 @@ class GameEngine {
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
 
-        // 触摸状态管理
+        // 触摸状态管理（用于交换游戏）
         this.touchState = {
             isActive: false,
             startX: 0,
             startY: 0,
+            currentX: 0,
+            currentY: 0,
             startRow: -1,
             startCol: -1,
-            currentPath: [],
-            minSwipeDistance: 20,
+            swipeDetected: false,
+            swipeDirection: null,
+            minSwipeDistance: 30,
             isMouseDown: false
         };
 
@@ -156,17 +159,31 @@ class GameEngine {
         const canvasX = x * scaleX;
         const canvasY = y * scaleY;
 
-        // 初始化触摸状态
+        const row = Math.floor(canvasY / this.cellSize);
+        const col = Math.floor(canvasX / this.cellSize);
+
+        // 初始化触摸状态（用于滑动交换）
         this.touchState.isActive = true;
         this.touchState.startX = x;
         this.touchState.startY = y;
-        this.touchState.startRow = Math.floor(canvasY / this.cellSize);
-        this.touchState.startCol = Math.floor(canvasX / this.cellSize);
-        this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
+        this.touchState.currentX = x;
+        this.touchState.currentY = y;
+        this.touchState.startRow = row;
+        this.touchState.startCol = col;
+        this.touchState.swipeDetected = false;
+        this.touchState.swipeDirection = null;
 
-        // 播放按钮音效和触觉反馈
-        this.playSound('button');
-        window.telegramApp.hapticFeedback('light');
+        // 检查起始位置是否有效
+        if (row >= 0 && row < this.gridSize && col >= 0 && col < this.gridSize) {
+            // 选择起始方块
+            this.selectedCell = { row, col };
+
+            // 播放按钮音效和触觉反馈
+            this.playSound('button');
+            window.telegramApp.hapticFeedback('light');
+        }
+
+        this.render();
     }
 
     handleTouchMove(event) {
@@ -178,30 +195,27 @@ class GameEngine {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
-        // 坐标转换
-        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
-        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
-        const canvasX = x * scaleX;
-        const canvasY = y * scaleY;
+        this.touchState.currentX = x;
+        this.touchState.currentY = y;
 
-        const currentRow = Math.floor(canvasY / this.cellSize);
-        const currentCol = Math.floor(canvasX / this.cellSize);
+        // 计算滑动距离和方向
+        const deltaX = x - this.touchState.startX;
+        const deltaY = y - this.touchState.startY;
+        const minSwipeDistance = 30; // 最小滑动距离
 
-        // 检查是否移动到了新的格子
-        if (currentRow >= 0 && currentRow < this.gridSize &&
-            currentCol >= 0 && currentCol < this.gridSize) {
-
-            const lastPath = this.touchState.currentPath[this.touchState.currentPath.length - 1];
-
-            if (lastPath.row !== currentRow || lastPath.col !== currentCol) {
-                // 检查是否与起始格子相邻或是同一类型
-                if (this.canAddToPath(currentRow, currentCol)) {
-                    this.touchState.currentPath.push({ row: currentRow, col: currentCol });
-
-                    // 轻微触觉反馈
-                    window.telegramApp.hapticFeedback('light');
-                }
+        // 检测滑动方向
+        if (!this.touchState.swipeDetected && (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance)) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 水平滑动
+                this.touchState.swipeDirection = deltaX > 0 ? 'right' : 'left';
+            } else {
+                // 垂直滑动
+                this.touchState.swipeDirection = deltaY > 0 ? 'down' : 'up';
             }
+            this.touchState.swipeDetected = true;
+
+            // 触觉反馈
+            window.telegramApp.hapticFeedback('light');
         }
 
         this.render();
@@ -211,7 +225,7 @@ class GameEngine {
         event.preventDefault();
         if (!this.touchState.isActive) return;
 
-        this.processTouchPath();
+        this.processSwipe();
         this.resetTouchState();
     }
 
@@ -228,16 +242,28 @@ class GameEngine {
         const canvasX = x * scaleX;
         const canvasY = y * scaleY;
 
-        // 初始化鼠标状态
+        const row = Math.floor(canvasY / this.cellSize);
+        const col = Math.floor(canvasX / this.cellSize);
+
+        // 初始化鼠标状态（用于滑动交换）
         this.touchState.isMouseDown = true;
         this.touchState.startX = x;
         this.touchState.startY = y;
-        this.touchState.startRow = Math.floor(canvasY / this.cellSize);
-        this.touchState.startCol = Math.floor(canvasX / this.cellSize);
-        this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
+        this.touchState.currentX = x;
+        this.touchState.currentY = y;
+        this.touchState.startRow = row;
+        this.touchState.startCol = col;
+        this.touchState.swipeDetected = false;
+        this.touchState.swipeDirection = null;
 
-        // 播放按钮音效
-        this.playSound('button');
+        // 检查起始位置是否有效
+        if (row >= 0 && row < this.gridSize && col >= 0 && col < this.gridSize) {
+            this.selectedCell = { row, col };
+            // 播放按钮音效
+            this.playSound('button');
+        }
+
+        this.render();
     }
 
     handleMouseMove(event) {
@@ -247,27 +273,24 @@ class GameEngine {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        // 坐标转换
-        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
-        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
-        const canvasX = x * scaleX;
-        const canvasY = y * scaleY;
+        this.touchState.currentX = x;
+        this.touchState.currentY = y;
 
-        const currentRow = Math.floor(canvasY / this.cellSize);
-        const currentCol = Math.floor(canvasX / this.cellSize);
+        // 计算滑动距离和方向
+        const deltaX = x - this.touchState.startX;
+        const deltaY = y - this.touchState.startY;
+        const minSwipeDistance = 30; // 最小滑动距离
 
-        // 检查是否移动到了新的格子
-        if (currentRow >= 0 && currentRow < this.gridSize &&
-            currentCol >= 0 && currentCol < this.gridSize) {
-
-            const lastPath = this.touchState.currentPath[this.touchState.currentPath.length - 1];
-
-            if (lastPath.row !== currentRow || lastPath.col !== currentCol) {
-                // 检查是否与起始格子相邻或是同一类型
-                if (this.canAddToPath(currentRow, currentCol)) {
-                    this.touchState.currentPath.push({ row: currentRow, col: currentCol });
-                }
+        // 检测滑动方向
+        if (!this.touchState.swipeDetected && (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance)) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 水平滑动
+                this.touchState.swipeDirection = deltaX > 0 ? 'right' : 'left';
+            } else {
+                // 垂直滑动
+                this.touchState.swipeDirection = deltaY > 0 ? 'down' : 'up';
             }
+            this.touchState.swipeDetected = true;
         }
 
         this.render();
@@ -276,7 +299,7 @@ class GameEngine {
     handleMouseUp(event) {
         if (!this.touchState.isMouseDown) return;
 
-        this.processTouchPath();
+        this.processSwipe();
         this.resetTouchState();
     }
 
@@ -330,115 +353,46 @@ class GameEngine {
         return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
     }
 
-    // 检查是否可以添加到路径中
-    canAddToPath(row, col) {
-        if (row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
-            return false;
-        }
 
-        const path = this.touchState.currentPath;
-        if (path.length === 0) return true;
-
-        const startCell = path[0];
-        const currentCell = { row, col };
-
-        // 检查是否已经在路径中
-        const alreadyInPath = path.some(cell => cell.row === row && cell.col === col);
-        if (alreadyInPath) return false;
-
-        // 检查是否与起始方块是同一类型
-        if (this.grid[startCell.row][startCell.col] !== this.grid[row][col]) {
-            return false;
-        }
-
-        // 检查是否与路径中的最后一个方块相邻
-        const lastCell = path[path.length - 1];
-        return this.isAdjacent(lastCell, currentCell);
-    }
-
-    // 处理触摸路径
-    async processTouchPath() {
-        const path = this.touchState.currentPath;
-
-        if (path.length < 3) {
-            // 路径太短，不能消除
+    // 处理滑动交换
+    async processSwipe() {
+        if (!this.touchState.swipeDetected || !this.selectedCell) {
             return;
         }
 
-        // 检查路径中的所有方块是否为同一类型
-        const startType = this.grid[path[0].row][path[0].col];
-        const allSameType = path.every(cell => this.grid[cell.row][cell.col] === startType);
+        const { startRow, startCol, swipeDirection } = this.touchState;
 
-        if (!allSameType) {
+        // 根据滑动方向确定目标位置
+        let targetRow = startRow;
+        let targetCol = startCol;
+
+        switch (swipeDirection) {
+            case 'up':
+                targetRow = Math.max(0, startRow - 1);
+                break;
+            case 'down':
+                targetRow = Math.min(this.gridSize - 1, startRow + 1);
+                break;
+            case 'left':
+                targetCol = Math.max(0, startCol - 1);
+                break;
+            case 'right':
+                targetCol = Math.min(this.gridSize - 1, startCol + 1);
+                break;
+            default:
+                return;
+        }
+
+        // 检查目标位置是否与起始位置相同（边界情况）
+        if (targetRow === startRow && targetCol === startCol) {
             return;
         }
 
-        this.isAnimating = true;
+        // 执行交换
+        const cell1 = { row: startRow, col: startCol };
+        const cell2 = { row: targetRow, col: targetCol };
 
-        // 减少移动次数
-        this.moves--;
-        this.resetMoveTimer();
-        this.updateGameUI();
-
-        // 计算得分
-        const baseScore = this.calculateMatchScore(path);
-        const comboMultiplier = Math.pow(CONFIG.BALANCE.COMBO_MULTIPLIER, this.combo);
-        const finalScore = Math.floor(baseScore * comboMultiplier);
-
-        this.score += finalScore;
-
-        // 计算万花币奖励
-        const coinReward = this.calculateCoinReward(path);
-        if (coinReward > 0) {
-            await window.userManager.addCoins(coinReward, '滑动消除奖励');
-        }
-
-        // 显示得分弹窗
-        this.showScorePopup(finalScore, path[0].row, path[0].col);
-
-        // 更新目标进度并清除方块
-        path.forEach(cell => {
-            if (this.objectives[startType]) {
-                this.objectives[startType].current++;
-            }
-
-            // 同时更新游戏目标系统
-            if (window.gameObjectives) {
-                window.gameObjectives.updateProgress(startType, 1);
-            }
-
-            this.grid[cell.row][cell.col] = BLOCK_TYPES.EMPTY;
-            this.createParticles(cell.col * this.cellSize + this.cellSize / 2,
-                               cell.row * this.cellSize + this.cellSize / 2);
-        });
-
-        // 播放消除音效和触觉反馈（基于匹配数量）
-        if (window.audioManager) {
-            window.audioManager.onMatch(removedCells.length);
-        } else {
-            this.playSound('match');
-        }
-        window.telegramApp.hapticFeedback('medium');
-
-        this.render();
-        await this.sleep(300);
-
-        // 下落方块
-        await this.dropBlocks();
-
-        // 填充新方块
-        this.fillEmptySpaces();
-
-        this.render();
-        await this.sleep(300);
-
-        // 处理连锁匹配
-        await this.processMatches();
-
-        // 检查游戏结束条件
-        this.checkGameEnd();
-
-        this.isAnimating = false;
+        await this.swapBlocks(cell1, cell2);
     }
 
     // 重置触摸状态
@@ -447,9 +401,13 @@ class GameEngine {
         this.touchState.isMouseDown = false;
         this.touchState.startX = 0;
         this.touchState.startY = 0;
+        this.touchState.currentX = 0;
+        this.touchState.currentY = 0;
         this.touchState.startRow = -1;
         this.touchState.startCol = -1;
-        this.touchState.currentPath = [];
+        this.touchState.swipeDetected = false;
+        this.touchState.swipeDirection = null;
+        this.selectedCell = null;
         this.render();
     }
 
