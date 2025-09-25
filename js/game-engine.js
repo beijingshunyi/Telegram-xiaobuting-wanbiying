@@ -586,6 +586,18 @@ class GameEngine {
 
             this.render();
             await this.sleep(300);
+
+            // 每次消除后立即检查目标是否完成
+            const objectivesCompleted = window.gameObjectives ?
+                window.gameObjectives.currentObjectives.every(obj => obj.completed) :
+                this.checkObjectivesCompleted();
+
+            if (objectivesCompleted) {
+                this.gameState = 'completed';
+                this.stopTimers();
+                this.onLevelComplete();
+                return; // 立即退出，不再处理其他逻辑
+            }
         }
 
         // 重置连击
@@ -1163,10 +1175,16 @@ class GameEngine {
             return;
         }
 
-        // 检查目标是否完成
-        if (this.checkObjectivesCompleted() || (window.gameObjectives && window.gameObjectives.currentObjectives.every(obj => obj.completed))) {
+        // 检查目标是否完成（优先检查游戏目标系统）
+        const objectivesCompleted = window.gameObjectives ?
+            window.gameObjectives.currentObjectives.every(obj => obj.completed) :
+            this.checkObjectivesCompleted();
+
+        if (objectivesCompleted) {
             this.gameState = 'completed';
+            this.stopTimers(); // 立即停止所有计时器
             this.onLevelComplete();
+            return; // 立即返回，不再执行其他检查
         }
     }
 
@@ -1230,20 +1248,39 @@ class GameEngine {
     showLevelCompleteScreen(reward) {
         const modal = document.createElement('div');
         modal.className = 'level-complete';
+
+        // 计算星级评分
+        const movesRatio = this.moves / CONFIG.GAME.INITIAL_MOVES;
+        let stars = 1;
+        if (movesRatio >= 0.5) stars = 2;
+        if (movesRatio >= 0.7) stars = 3;
+
+        // 获取目标完成情况
+        let objectivesSummary = '';
+        if (window.gameObjectives && window.gameObjectives.currentObjectives) {
+            objectivesSummary = window.gameObjectives.currentObjectives.map(obj =>
+                `<div class="objective-summary">✅ ${obj.fruitEmoji} 消除了 ${obj.current}/${obj.target} 个${obj.fruitName}</div>`
+            ).join('');
+        }
+
         modal.innerHTML = `
             <h3>🎉 关卡完成！</h3>
             <div class="star-rating">
-                <span class="star active">⭐</span>
-                <span class="star active">⭐</span>
-                <span class="star active">⭐</span>
+                ${Array(3).fill().map((_, i) =>
+                    `<span class="star ${i < stars ? 'active' : ''}">⭐</span>`
+                ).join('')}
             </div>
             <div class="level-stats">
-                <div>得分: ${this.score}</div>
-                <div>剩余步数: ${this.moves}</div>
-                <div>奖励: ${reward} ${CONFIG.CURRENCY.NAME}</div>
+                <div>🏆 得分: ${this.score.toLocaleString()}</div>
+                <div>👟 剩余步数: ${this.moves}</div>
+                <div>💰 奖励: ${reward} ${CONFIG.CURRENCY.NAME}</div>
+            </div>
+            <div class="objectives-summary">
+                <h4>🎯 目标完成情况</h4>
+                ${objectivesSummary}
             </div>
             <div class="reward-info">
-                <p>恭喜通过第 ${this.level} 关！</p>
+                <p>🎊 恭喜通过第 ${this.level} 关！所有目标已达成！</p>
             </div>
             <button onclick="window.gameEngine.nextLevel()">下一关</button>
             <button onclick="window.gameEngine.backToMenu()">返回菜单</button>
@@ -1335,6 +1372,19 @@ class GameEngine {
         this.clearModals();
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('main-menu').classList.remove('hidden');
+    }
+
+    // 游戏目标系统调用的接口
+    levelCompleted() {
+        this.gameState = 'completed';
+        this.onLevelComplete();
+    }
+
+    // 游戏结束接口（供外部调用）
+    gameOver(reason = '游戏结束') {
+        this.gameState = 'gameover';
+        this.stopTimers();
+        this.onGameOver();
     }
 
     clearModals() {

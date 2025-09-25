@@ -631,3 +631,59 @@
     color: #4CAF50;
     font-weight: bold;
 }
+
+/* 游戏完成界面样式增强 */
+.objectives-summary {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.objectives-summary h4 {
+    margin: 0 0 0.5rem 0;
+    color: rgba(255,255,255,0.9);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.objective-summary {
+    display: flex;
+    align-items: center;
+    margin: 0.3rem 0;
+    padding: 0.3rem;
+    background: rgba(76, 175, 80, 0.2);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.95);
+    font-size: 0.8rem;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.level-complete .level-stats {
+    margin: 1rem 0;
+}
+
+.level-complete .level-stats > div {
+    margin: 0.4rem 0;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media (max-width: 480px) {
+    .objectives-summary {
+        padding: 0.8rem;
+        margin: 0.8rem 0;
+    }
+
+    .objectives-summary h4 {
+        font-size: 0.85rem;
+    }
+
+    .objective-summary {
+        font-size: 0.75rem;
+        padding: 0.25rem;
+    }
+}
