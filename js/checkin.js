@@ -145,7 +145,15 @@ class CheckinSystem {
             </div>
         `;
 
-        this.checkinModal = window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
+        try {
+            this.checkinModal = window.modalManager.show(content, {
+                closable: true,
+                closeOnBackdrop: true
+            });
+        } catch (error) {
+            console.error('Failed to show checkin modal:', error);
+            this.showFallbackModal(content);
+        }
     }
 
     generateCheckinCalendar(currentStreak) {
@@ -260,7 +268,11 @@ class CheckinSystem {
             window.telegramApp.hapticFeedback('success');
 
             // 移除模态框
-            setTimeout(() => this.removeCheckinModal(), 2000);
+            setTimeout(() => {
+                if (this.checkinModal) {
+                    this.removeCheckinModal();
+                }
+            }, 3000);
 
         } catch (error) {
             console.error('Checkin failed:', error);
@@ -535,13 +547,96 @@ class CheckinSystem {
             </div>
         `;
 
-        this.checkinModal = window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
+        try {
+            this.checkinModal = window.modalManager.show(content, {
+                closable: true,
+                closeOnBackdrop: true
+            });
+        } catch (error) {
+            console.error('Failed to show checkin modal:', error);
+            this.showFallbackModal(content);
+        }
     }
 
     removeCheckinModal() {
         if (this.checkinModal) {
-            window.modalManager.close();
-            this.checkinModal = null;
+            try {
+                window.modalManager.close();
+                this.checkinModal = null;
+            } catch (error) {
+                console.error('Failed to close checkin modal:', error);
+                // 强制关闭
+                const modalContainer = document.getElementById('modal-container');
+                if (modalContainer) {
+                    modalContainer.style.display = 'none';
+                    modalContainer.innerHTML = '';
+                    modalContainer.classList.remove('show', 'hide');
+                }
+                this.checkinModal = null;
+            }
+        }
+    }
+
+    // 备用模态框显示方法
+    showFallbackModal(content) {
+        const existingModal = document.getElementById('fallback-checkin-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modalHtml = `
+            <div id="fallback-checkin-modal" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.6);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                backdrop-filter: blur(2px);
+            ">
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: min(450px, 90vw);
+                    max-height: 85vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    position: relative;
+                    margin: 1rem;
+                ">
+                    <button onclick="document.getElementById('fallback-checkin-modal').remove()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: rgba(0, 0, 0, 0.1);
+                        border: none;
+                        border-radius: 50%;
+                        width: 32px;
+                        height: 32px;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        color: #666;
+                    ">&times;</button>
+                    ${content}
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // 点击背景关闭
+        const modal = document.getElementById('fallback-checkin-modal');
+        if (modal) {
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         }
     }
 

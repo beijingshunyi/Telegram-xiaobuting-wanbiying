@@ -82,12 +82,11 @@ class AdsManager {
             },
             {
                 id: 'default_2',
-                type: 'video',
+                type: 'social',
                 title: '邀请好友，共享收益',
-                description: '邀请朋友一起玩游戏，获得额外万花币奖励！',
-                videoUrl: 'videos/ads/invite-friends.mp4',
-                thumbnailUrl: 'images/ads/invite-thumbnail.jpg',
-                linkUrl: '',
+                description: '邀请朋友一起玩游戏，获得额外万花币奖励！由 消不停·万币赢 提供',
+                action: 'telegram_contact',
+                contact: '@bjxc010',
                 sponsor: CONFIG.COPYRIGHT.GAME_NAME,
                 active: true,
                 weight: 8
@@ -264,7 +263,7 @@ class AdsManager {
                 </div>
 
                 <div class="ad-content-wrapper">
-                    ${ad.type === 'video' ? this.createVideoAd(ad) : this.createImageAd(ad)}
+                    ${ad.type === 'video' ? this.createVideoAd(ad) : ad.type === 'social' ? this.createSocialAd(ad) : this.createImageAd(ad)}
                 </div>
 
                 <div class="ad-controls">
@@ -327,6 +326,23 @@ class AdsManager {
         `;
     }
 
+    createSocialAd(ad) {
+        return `
+            <div class="social-ad" onclick="window.adsManager.onAdClick('${ad.id}')">
+                <div class="social-content">
+                    <div class="social-icon">👥</div>
+                    <h4>${ad.title}</h4>
+                    <p>${ad.description}</p>
+                    <div class="contact-info">
+                        <span class="contact-label">联系：</span>
+                        <span class="contact-link">${ad.contact}</span>
+                    </div>
+                    <button class="contact-btn">立即联系</button>
+                </div>
+            </div>
+        `;
+    }
+
     startAdCountdown(modal, duration) {
         let timeLeft = duration;
         const progressFill = modal.querySelector('#ad-progress');
@@ -353,16 +369,22 @@ class AdsManager {
 
     onAdClick(adId) {
         const ad = this.manualAds.find(a => a.id === adId);
-        if (!ad || !ad.linkUrl) return;
+        if (!ad) return;
 
         // 记录广告点击
         this.trackAdClick(adId);
 
-        // 跳转链接
-        if (ad.linkUrl.startsWith('https://t.me/')) {
-            window.telegramApp.openTelegramUser(ad.linkUrl.split('/').pop());
-        } else {
-            window.open(ad.linkUrl, '_blank');
+        // 处理不同类型的广告点击
+        if (ad.type === 'social' && ad.action === 'telegram_contact') {
+            // 社交广告跳转到Telegram用户
+            window.telegramApp.openTelegramUser(ad.contact);
+        } else if (ad.linkUrl) {
+            // 普通链接跳转
+            if (ad.linkUrl.startsWith('https://t.me/')) {
+                window.telegramApp.openTelegramUser(ad.linkUrl.split('/').pop());
+            } else {
+                window.open(ad.linkUrl, '_blank');
+            }
         }
     }
 
@@ -453,7 +475,7 @@ class AdsManager {
                     <button class="modal-close" onclick="this.closest('.modal-container').remove(); this.resolve?.()">&times;</button>
 
                     <div class="ad-content-wrapper">
-                        ${ad.type === 'video' ? this.createVideoAd(ad) : this.createImageAd(ad)}
+                        ${ad.type === 'video' ? this.createVideoAd(ad) : ad.type === 'social' ? this.createSocialAd(ad) : this.createImageAd(ad)}
                     </div>
 
                     <div class="ad-footer">
@@ -752,6 +774,85 @@ adStyles.textContent = `
             flex-direction: column;
             gap: 1rem;
         }
+    }
+
+    /* 社交广告样式 */
+    .social-ad {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .social-ad:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .social-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .social-icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .social-ad h4 {
+        font-size: 1.3rem;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .social-ad p {
+        font-size: 1rem;
+        margin: 0;
+        opacity: 0.9;
+        line-height: 1.4;
+    }
+
+    .contact-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+
+    .contact-label {
+        font-size: 0.9rem;
+    }
+
+    .contact-link {
+        color: #ffeaa7;
+        font-weight: bold;
+    }
+
+    .contact-btn {
+        background: rgba(255,255,255,0.2);
+        border: 2px solid white;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .contact-btn:hover {
+        background: white;
+        color: #667eea;
+        transform: translateY(-1px);
     }
 `;
 

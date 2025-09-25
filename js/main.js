@@ -163,9 +163,13 @@ class GameApp {
             this.showWithdraw();
         });
 
-        document.getElementById('invite-friends')?.addEventListener('click', () => {
-            this.inviteFriends();
-        });
+        const inviteBtn = document.getElementById('invite-friends');
+        if (inviteBtn) {
+            inviteBtn.setAttribute('data-handled-by-main', 'true');
+            inviteBtn.addEventListener('click', () => {
+                this.inviteFriends();
+            });
+        }
     }
 
     setupGameScreenEvents() {
@@ -395,6 +399,71 @@ class GameApp {
     }
 
     showShop() {
+        const content = `
+            <div class="shop-modal">
+                <h2>🛒 道具商店</h2>
+                <div class="shop-container">
+                    <div class="shop-tabs">
+                        <button class="shop-tab active" data-tab="tools">道具</button>
+                        <button class="shop-tab" data-tab="themes">皮肤</button>
+                    </div>
+
+                    <div class="shop-content" id="shop-tools">
+                        ${this.generateToolsShop()}
+                    </div>
+
+                    <div class="shop-content hidden" id="shop-themes">
+                        <p style="text-align: center; color: #666; padding: 2rem;">皮肤商店即将上线！</p>
+                    </div>
+                </div>
+
+                <div class="sponsor-info">
+                    <p>本功能由"${CONFIG.COPYRIGHT.SPONSOR}"提供技术支持</p>
+                    <p>合作联系：<a href="#" onclick="window.telegramApp.openTelegramUser('${CONFIG.COPYRIGHT.COOPERATION}')" class="sponsor-link">${CONFIG.COPYRIGHT.COOPERATION}</a></p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const modal = window.modalManager.show(content, {
+                closable: true,
+                closeOnBackdrop: true
+            });
+
+            // 等待DOM渲染完成后再设置事件监听
+            setTimeout(() => {
+                // 设置标签切换
+                modal.querySelectorAll('.shop-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        modal.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+                        modal.querySelectorAll('.shop-content').forEach(c => c.classList.add('hidden'));
+
+                        e.target.classList.add('active');
+                        modal.querySelector(`#shop-${e.target.dataset.tab}`).classList.remove('hidden');
+                    });
+                });
+
+                // 设置购买按钮
+                modal.querySelectorAll('.buy-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const toolType = e.target.dataset.tool;
+                        const price = parseInt(e.target.dataset.price);
+                        await this.buyTool(toolType, price);
+                        window.modalManager.close();
+                        // 延迟重新打开以避免冲突
+                        setTimeout(() => this.showShop(), 300);
+                    });
+                });
+            }, 100);
+
+        } catch (error) {
+            console.error('Failed to show shop modal:', error);
+            // 降级到原来的模态框方法
+            this.showShopFallback();
+        }
+    }
+
+    showShopFallback() {
         const modal = this.createModal('道具商店', `
             <div class="shop-container">
                 <div class="shop-tabs">
@@ -430,7 +499,7 @@ class GameApp {
                 const price = parseInt(e.target.dataset.price);
                 await this.buyTool(toolType, price);
                 modal.remove();
-                this.showShop(); // 重新打开商店更新数量
+                this.showShopFallback(); // 重新打开商店更新数量
             });
         });
     }
@@ -558,51 +627,84 @@ class GameApp {
     }
 
     showWithdraw() {
-        const modal = this.createModal('提现中心', `
-            <div class="withdraw-container">
-                <div class="withdraw-balance">
-                    <h3>可提现余额</h3>
-                    <div class="balance-display">
-                        <span class="emoji-icon coin-icon">🪙</span>
-                        <span class="balance-amount">${window.userManager.getCurrentUser()?.coins || 0}</span>
+        // Check if we have the proper withdrawal manager
+        if (window.withdrawManager && typeof window.withdrawManager.showWithdrawModal === 'function') {
+            // Use the dedicated withdrawal manager
+            window.withdrawManager.showWithdrawModal();
+            return;
+        }
+
+        // Fallback to basic modal
+        const content = `
+            <div class="withdraw-modal">
+                <h2>💰 提现中心</h2>
+                <div class="withdraw-container">
+                    <div class="withdraw-balance">
+                        <h3>可提现余额</h3>
+                        <div class="balance-display">
+                            <span class="emoji-icon coin-icon">🪙</span>
+                            <span class="balance-amount">${window.userManager.getCurrentUser()?.coins || 0}</span>
+                        </div>
+                        <p class="balance-note">= ${((window.userManager.getCurrentUser()?.coins || 0) / 100).toFixed(2)} 元</p>
                     </div>
-                    <p class="balance-note">= ${((window.userManager.getCurrentUser()?.coins || 0) / 100).toFixed(2)} 元</p>
+
+                    <div class="withdraw-methods">
+                        <div class="withdraw-method">
+                            <div class="method-info">
+                                <h4>💳 支付宝提现</h4>
+                                <p>最低提现: ${CONFIG.WITHDRAW.ALIPAY_MIN} 万花币 (${CONFIG.WITHDRAW.ALIPAY_MIN/100}元)</p>
+                                <p>手续费: 3% | 到账时间: 1-3个工作日</p>
+                            </div>
+                            <button class="withdraw-btn" onclick="window.withdrawManager?.showWithdrawForm('alipay')">
+                                立即提现
+                            </button>
+                        </div>
+
+                        <div class="withdraw-method">
+                            <div class="method-info">
+                                <h4>₿ USDT提现</h4>
+                                <p>最低提现: ${CONFIG.WITHDRAW.USDT_MIN_USD} USDT</p>
+                                <p>手续费: 3% | 到账时间: 24小时内</p>
+                            </div>
+                            <button class="withdraw-btn" onclick="window.withdrawManager?.showWithdrawForm('usdt')">
+                                立即提现
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="withdraw-note">
+                        <p>⚠️ 为确保提现成功，请填写准确的账户信息</p>
+                        <p>🔐 所有提现数据均加密存储，保障资金安全</p>
+                    </div>
                 </div>
 
-                <div class="withdraw-methods">
-                    <div class="withdraw-method">
-                        <div class="method-info">
-                            <h4>💳 支付宝提现</h4>
-                            <p>最低提现: ${CONFIG.WITHDRAW.ALIPAY_MIN} 万花币 (${CONFIG.WITHDRAW.ALIPAY_MIN/100}元)</p>
-                            <p>手续费: 3% | 到账时间: 1-3个工作日</p>
-                        </div>
-                        <button class="withdraw-btn" onclick="window.gameApp.showAlipayWithdraw()">
-                            立即提现
-                        </button>
-                    </div>
-
-                    <div class="withdraw-method">
-                        <div class="method-info">
-                            <h4>₿ USDT提现</h4>
-                            <p>最低提现: ${CONFIG.WITHDRAW.USDT_MIN_USD} USDT</p>
-                            <p>手续费: 3% | 到账时间: 24小时内</p>
-                        </div>
-                        <button class="withdraw-btn" onclick="window.gameApp.showUsdtWithdraw()">
-                            立即提现
-                        </button>
-                    </div>
-                </div>
-
-                <div class="withdraw-note">
-                    <p>⚠️ 为确保提现成功，请填写准确的账户信息</p>
-                    <p>🔐 所有提现数据均加密存储，保障资金安全</p>
+                <div class="sponsor-info">
+                    <p>本功能由"${CONFIG.COPYRIGHT.SPONSOR}"提供技术支持</p>
+                    <p>合作联系：<a href="#" onclick="window.telegramApp.openTelegramUser('${CONFIG.COPYRIGHT.COOPERATION}')" class="sponsor-link">${CONFIG.COPYRIGHT.COOPERATION}</a></p>
                 </div>
             </div>
-        `);
+        `;
+
+        try {
+            window.modalManager.show(content, {
+                closable: true,
+                closeOnBackdrop: true
+            });
+        } catch (error) {
+            console.error('Failed to show withdraw modal:', error);
+            // Use fallback createModal
+            this.createModal('提现中心', content);
+        }
     }
 
     inviteFriends() {
-        window.telegramApp.inviteFriend();
+        // Use the dedicated social manager if available
+        if (window.socialManager && typeof window.socialManager.showInviteModal === 'function') {
+            window.socialManager.showInviteModal();
+        } else {
+            // Fallback to simple Telegram share
+            window.telegramApp.inviteFriend();
+        }
     }
 
     createModal(title, content) {

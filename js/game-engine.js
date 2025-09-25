@@ -82,6 +82,25 @@ class GameEngine {
         // 鼠标/触摸事件
         this.canvas.addEventListener('click', this.handleClick.bind(this));
         this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+        this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+
+        // 鼠标滑动支持
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+
+        // 触摸状态管理
+        this.touchState = {
+            isActive: false,
+            startX: 0,
+            startY: 0,
+            startRow: -1,
+            startCol: -1,
+            currentPath: [],
+            minSwipeDistance: 20,
+            isMouseDown: false
+        };
 
         // 窗口大小变化
         window.addEventListener('resize', this.setupCanvas.bind(this));
@@ -106,7 +125,110 @@ class GameEngine {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
-        this.processClick(x, y);
+        // 初始化触摸状态
+        this.touchState.isActive = true;
+        this.touchState.startX = x;
+        this.touchState.startY = y;
+        this.touchState.startRow = Math.floor(y / this.cellSize);
+        this.touchState.startCol = Math.floor(x / this.cellSize);
+        this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
+
+        // 播放按钮音效和触觉反馈
+        this.playSound('button');
+        window.telegramApp.hapticFeedback('light');
+    }
+
+    handleTouchMove(event) {
+        event.preventDefault();
+        if (!this.touchState.isActive || this.gameState !== 'playing' || this.isAnimating) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = event.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        const currentRow = Math.floor(y / this.cellSize);
+        const currentCol = Math.floor(x / this.cellSize);
+
+        // 检查是否移动到了新的格子
+        if (currentRow >= 0 && currentRow < this.gridSize &&
+            currentCol >= 0 && currentCol < this.gridSize) {
+
+            const lastPath = this.touchState.currentPath[this.touchState.currentPath.length - 1];
+
+            if (lastPath.row !== currentRow || lastPath.col !== currentCol) {
+                // 检查是否与起始格子相邻或是同一类型
+                if (this.canAddToPath(currentRow, currentCol)) {
+                    this.touchState.currentPath.push({ row: currentRow, col: currentCol });
+
+                    // 轻微触觉反馈
+                    window.telegramApp.hapticFeedback('light');
+                }
+            }
+        }
+
+        this.render();
+    }
+
+    handleTouchEnd(event) {
+        event.preventDefault();
+        if (!this.touchState.isActive) return;
+
+        this.processTouchPath();
+        this.resetTouchState();
+    }
+
+    handleMouseDown(event) {
+        if (this.gameState !== 'playing' || this.isAnimating) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // 初始化鼠标状态
+        this.touchState.isMouseDown = true;
+        this.touchState.startX = x;
+        this.touchState.startY = y;
+        this.touchState.startRow = Math.floor(y / this.cellSize);
+        this.touchState.startCol = Math.floor(x / this.cellSize);
+        this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
+
+        // 播放按钮音效
+        this.playSound('button');
+    }
+
+    handleMouseMove(event) {
+        if (!this.touchState.isMouseDown || this.gameState !== 'playing' || this.isAnimating) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const currentRow = Math.floor(y / this.cellSize);
+        const currentCol = Math.floor(x / this.cellSize);
+
+        // 检查是否移动到了新的格子
+        if (currentRow >= 0 && currentRow < this.gridSize &&
+            currentCol >= 0 && currentCol < this.gridSize) {
+
+            const lastPath = this.touchState.currentPath[this.touchState.currentPath.length - 1];
+
+            if (lastPath.row !== currentRow || lastPath.col !== currentCol) {
+                // 检查是否与起始格子相邻或是同一类型
+                if (this.canAddToPath(currentRow, currentCol)) {
+                    this.touchState.currentPath.push({ row: currentRow, col: currentCol });
+                }
+            }
+        }
+
+        this.render();
+    }
+
+    handleMouseUp(event) {
+        if (!this.touchState.isMouseDown) return;
+
+        this.processTouchPath();
+        this.resetTouchState();
     }
 
     processClick(x, y) {
@@ -146,6 +268,120 @@ class GameEngine {
         const rowDiff = Math.abs(cell1.row - cell2.row);
         const colDiff = Math.abs(cell1.col - cell2.col);
         return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+    }
+
+    // 检查是否可以添加到路径中
+    canAddToPath(row, col) {
+        if (row < 0 || row >= this.gridSize || col < 0 || col >= this.gridSize) {
+            return false;
+        }
+
+        const path = this.touchState.currentPath;
+        if (path.length === 0) return true;
+
+        const startCell = path[0];
+        const currentCell = { row, col };
+
+        // 检查是否已经在路径中
+        const alreadyInPath = path.some(cell => cell.row === row && cell.col === col);
+        if (alreadyInPath) return false;
+
+        // 检查是否与起始方块是同一类型
+        if (this.grid[startCell.row][startCell.col] !== this.grid[row][col]) {
+            return false;
+        }
+
+        // 检查是否与路径中的最后一个方块相邻
+        const lastCell = path[path.length - 1];
+        return this.isAdjacent(lastCell, currentCell);
+    }
+
+    // 处理触摸路径
+    async processTouchPath() {
+        const path = this.touchState.currentPath;
+
+        if (path.length < 3) {
+            // 路径太短，不能消除
+            return;
+        }
+
+        // 检查路径中的所有方块是否为同一类型
+        const startType = this.grid[path[0].row][path[0].col];
+        const allSameType = path.every(cell => this.grid[cell.row][cell.col] === startType);
+
+        if (!allSameType) {
+            return;
+        }
+
+        this.isAnimating = true;
+
+        // 减少移动次数
+        this.moves--;
+        this.resetMoveTimer();
+        this.updateGameUI();
+
+        // 计算得分
+        const baseScore = this.calculateMatchScore(path);
+        const comboMultiplier = Math.pow(CONFIG.BALANCE.COMBO_MULTIPLIER, this.combo);
+        const finalScore = Math.floor(baseScore * comboMultiplier);
+
+        this.score += finalScore;
+
+        // 计算万花币奖励
+        const coinReward = this.calculateCoinReward(path);
+        if (coinReward > 0) {
+            await window.userManager.addCoins(coinReward, '滑动消除奖励');
+        }
+
+        // 显示得分弹窗
+        this.showScorePopup(finalScore, path[0].row, path[0].col);
+
+        // 更新目标进度并清除方块
+        path.forEach(cell => {
+            if (this.objectives[startType]) {
+                this.objectives[startType].current++;
+            }
+
+            this.grid[cell.row][cell.col] = BLOCK_TYPES.EMPTY;
+            this.createParticles(cell.col * this.cellSize + this.cellSize / 2,
+                               cell.row * this.cellSize + this.cellSize / 2);
+        });
+
+        // 播放消除音效和触觉反馈
+        this.playSound('match');
+        window.telegramApp.hapticFeedback('medium');
+
+        this.render();
+        await this.sleep(300);
+
+        // 下落方块
+        await this.dropBlocks();
+
+        // 填充新方块
+        this.fillEmptySpaces();
+
+        this.render();
+        await this.sleep(300);
+
+        // 处理连锁匹配
+        await this.processMatches();
+
+        // 检查游戏结束条件
+        this.checkGameEnd();
+
+        this.isAnimating = false;
+    }
+
+    // 重置触摸状态
+    resetTouchState() {
+        this.touchState.isActive = false;
+        this.touchState.isMouseDown = false;
+        this.touchState.startX = 0;
+        this.touchState.startY = 0;
+        this.touchState.startRow = -1;
+        this.touchState.startCol = -1;
+        this.touchState.currentPath = [];
+        this.render();
     }
 
     async swapBlocks(cell1, cell2) {
@@ -450,6 +686,11 @@ class GameEngine {
             this.drawSelection();
         }
 
+        // 绘制触摸路径
+        if (this.touchState.currentPath && this.touchState.currentPath.length > 0) {
+            this.drawTouchPath();
+        }
+
         // 绘制粒子效果
         this.updateAndDrawParticles();
     }
@@ -653,6 +894,59 @@ class GameEngine {
         this.ctx.setLineDash([5, 5]);
         this.ctx.strokeRect(x + 1, y + 1, this.cellSize - 2, this.cellSize - 2);
         this.ctx.setLineDash([]);
+    }
+
+    drawTouchPath() {
+        const path = this.touchState.currentPath;
+        if (!path || path.length === 0) return;
+
+        // 绘制路径连接线
+        if (path.length > 1) {
+            this.ctx.strokeStyle = '#4ecdc4';
+            this.ctx.lineWidth = 4;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.setLineDash([]);
+
+            this.ctx.beginPath();
+            const firstCell = path[0];
+            const firstX = firstCell.col * this.cellSize + this.cellSize / 2;
+            const firstY = firstCell.row * this.cellSize + this.cellSize / 2;
+            this.ctx.moveTo(firstX, firstY);
+
+            for (let i = 1; i < path.length; i++) {
+                const cell = path[i];
+                const x = cell.col * this.cellSize + this.cellSize / 2;
+                const y = cell.row * this.cellSize + this.cellSize / 2;
+                this.ctx.lineTo(x, y);
+            }
+            this.ctx.stroke();
+        }
+
+        // 高亮路径中的方块
+        path.forEach((cell, index) => {
+            const x = cell.col * this.cellSize;
+            const y = cell.row * this.cellSize;
+
+            // 不同的高亮效果
+            if (index === 0) {
+                // 起始方块 - 绿色边框
+                this.ctx.strokeStyle = '#48c78e';
+                this.ctx.lineWidth = 4;
+                this.ctx.setLineDash([]);
+                this.ctx.strokeRect(x + 2, y + 2, this.cellSize - 4, this.cellSize - 4);
+            } else {
+                // 路径方块 - 蓝色边框
+                this.ctx.strokeStyle = '#4ecdc4';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([]);
+                this.ctx.strokeRect(x + 2, y + 2, this.cellSize - 4, this.cellSize - 4);
+            }
+
+            // 添加半透明覆盖层
+            this.ctx.fillStyle = index === 0 ? 'rgba(72, 199, 142, 0.2)' : 'rgba(78, 205, 196, 0.2)';
+            this.ctx.fillRect(x + 2, y + 2, this.cellSize - 4, this.cellSize - 4);
+        });
     }
 
     createParticles(x, y) {

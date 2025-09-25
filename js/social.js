@@ -47,9 +47,14 @@ class SocialManager {
 
     // 设置事件监听器
     setupEventListeners() {
+        // Only set up event listener if main.js hasn't already handled it
         const inviteBtn = document.getElementById('invite-friends');
-        if (inviteBtn) {
-            inviteBtn.addEventListener('click', () => this.showInviteModal());
+        if (inviteBtn && !inviteBtn.hasAttribute('data-handled-by-main')) {
+            inviteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showInviteModal();
+            });
         }
 
         // 监听分享事件
@@ -118,7 +123,13 @@ class SocialManager {
                 </div>
         `;
 
-        return window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
+        try {
+            return window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
+        } catch (error) {
+            console.error('Failed to show invite modal:', error);
+            // 降级到简单的邀请分享
+            window.telegramApp.inviteFriend();
+        }
     }
 
     // 生成邀请链接

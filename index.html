@@ -26,7 +26,7 @@
         </div>
         <div class="sponsor-info">
             <p>本游戏由"北京修车【万花楼】"赞助开发</p>
-            <p>开发者：<a href="#" id="developer-link">@bjxc010</a> | 合作联系：<a href="#" id="cooperation-link">@bjxc010</a></p>
+            <p>开发者：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 合作联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 广告联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a></p>
         </div>
     </div>
 
@@ -45,14 +45,18 @@
             <div class="currency-info">
                 <div class="coin-count">
                     <span class="coin-icon">🪙</span>
+                    <span class="coin-label">万花币：</span>
                     <span id="coin-count">0</span>
                 </div>
-                <div class="energy-bar">
-                    <div class="energy-fill" id="energy-fill"></div>
-                    <span class="energy-text">体力 <span id="energy-count">100</span>/100</span>
+                <div class="energy-display">
+                    <div class="energy-bar">
+                        <div class="energy-fill" id="energy-fill"></div>
+                    </div>
+                    <span class="energy-text">体力：<span id="energy-count">100</span>/100</span>
                 </div>
                 <div class="attempts-display">
-                    <span>游戏次数 <span id="daily-attempts">6</span></span>
+                    <span class="attempts-icon">🎮</span>
+                    <span>游戏次数：<span id="daily-attempts">6</span></span>
                     <span id="attempts-warning" class="btn-badge">!</span>
                 </div>
             </div>
@@ -119,7 +123,7 @@
 
         <div class="sponsor-info">
             <p>本游戏由"北京修车【万花楼】"赞助开发</p>
-            <p>开发者：<a href="#" class="sponsor-link">@bjxc010</a> | 合作联系：<a href="#" class="sponsor-link">@bjxc010</a></p>
+            <p>开发者：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 合作联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 广告联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a></p>
         </div>
     </div>
 
@@ -191,7 +195,7 @@
         </div>
 
         <div class="sponsor-info">
-            <p>本游戏由"北京修车【万花楼】"赞助开发 | <a href="#" class="sponsor-link">@bjxc010</a></p>
+            <p>本游戏由"北京修车【万花楼】"赞助开发 | 开发者：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 合作联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> | 广告联系：<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a></p>
         </div>
     </div>
 
@@ -215,6 +219,7 @@
     <!-- JavaScript文件 -->
     <script src="js/config.js"></script>
     <script src="js/modal-manager.js"></script>
+    <script src="js/audio-manager.js"></script>
     <script src="js/telegram.js"></script>
     <script src="js/database.js"></script>
     <script src="js/user.js"></script>
