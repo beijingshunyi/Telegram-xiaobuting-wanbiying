@@ -101,6 +101,10 @@ class CheckinSystem {
         // 移除已存在的模态框
         this.removeCheckinModal();
 
+        // 清理所有现有的签到相关弹窗
+        const existingModals = document.querySelectorAll('.checkin-modal, #fallback-checkin-modal, .modal-container');
+        existingModals.forEach(modal => modal.remove());
+
         const rewards = CONFIG.CURRENCY.SIGN_IN_BONUS;
         const nextReward = rewards[Math.min(currentStreak, rewards.length - 1)];
 
@@ -281,12 +285,12 @@ class CheckinSystem {
             // 触觉反馈
             window.telegramApp.hapticFeedback('success');
 
-            // 延长显示时间，让用户看清奖励信息 - 减少至3秒
+            // 延长显示时间，让用户看清奖励信息 - 增加至8秒
             setTimeout(() => {
-                if (this.checkinModal) {
+                if (this.checkinModal && !document.querySelector('.checkin-modal .success-animation')) {
                     this.removeCheckinModal();
                 }
-            }, 3000);
+            }, 8000);
 
         } catch (error) {
             console.error('Checkin failed:', error);
@@ -694,10 +698,11 @@ class CheckinSystem {
 const checkinStyles = document.createElement('style');
 checkinStyles.textContent = `
     .checkin-modal {
-        max-width: 400px;
-        width: 90%;
-        max-height: 90vh;
+        max-width: 450px;
+        width: 95%;
+        max-height: 85vh;
         overflow-y: auto;
+        min-width: 350px;
     }
 
     .checkin-header {
@@ -708,6 +713,11 @@ checkinStyles.textContent = `
     .checkin-header h2 {
         color: #333;
         margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .checkin-header p {
+        text-align: center;
     }
 
     .checkin-calendar {
@@ -758,6 +768,11 @@ checkinStyles.textContent = `
         border-radius: 15px;
         padding: 1.5rem;
         margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .reward-preview p {
+        text-align: center;
     }
 
     .reward-coin {
@@ -776,12 +791,18 @@ checkinStyles.textContent = `
 
     .streak-info {
         color: #666;
+        text-align: center;
+    }
+
+    .streak-info p {
+        text-align: center;
     }
 
     .streak-bonus {
         color: #e17055;
         font-weight: 500;
         margin-top: 0.5rem;
+        text-align: center;
     }
 
     .checkin-actions {
@@ -821,6 +842,7 @@ checkinStyles.textContent = `
 
     .weekly-rewards {
         margin-bottom: 2rem;
+        text-align: center;
     }
 
     .weekly-rewards h3 {

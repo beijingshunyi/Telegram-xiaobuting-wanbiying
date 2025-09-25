@@ -150,12 +150,18 @@ class GameEngine {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
+        // 坐标转换
+        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
+        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
         // 初始化触摸状态
         this.touchState.isActive = true;
         this.touchState.startX = x;
         this.touchState.startY = y;
-        this.touchState.startRow = Math.floor(y / this.cellSize);
-        this.touchState.startCol = Math.floor(x / this.cellSize);
+        this.touchState.startRow = Math.floor(canvasY / this.cellSize);
+        this.touchState.startCol = Math.floor(canvasX / this.cellSize);
         this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
 
         // 播放按钮音效和触觉反馈
@@ -172,8 +178,14 @@ class GameEngine {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
-        const currentRow = Math.floor(y / this.cellSize);
-        const currentCol = Math.floor(x / this.cellSize);
+        // 坐标转换
+        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
+        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
+        const currentRow = Math.floor(canvasY / this.cellSize);
+        const currentCol = Math.floor(canvasX / this.cellSize);
 
         // 检查是否移动到了新的格子
         if (currentRow >= 0 && currentRow < this.gridSize &&
@@ -210,12 +222,18 @@ class GameEngine {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
+        // 坐标转换
+        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
+        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
         // 初始化鼠标状态
         this.touchState.isMouseDown = true;
         this.touchState.startX = x;
         this.touchState.startY = y;
-        this.touchState.startRow = Math.floor(y / this.cellSize);
-        this.touchState.startCol = Math.floor(x / this.cellSize);
+        this.touchState.startRow = Math.floor(canvasY / this.cellSize);
+        this.touchState.startCol = Math.floor(canvasX / this.cellSize);
         this.touchState.currentPath = [{ row: this.touchState.startRow, col: this.touchState.startCol }];
 
         // 播放按钮音效
@@ -229,8 +247,14 @@ class GameEngine {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        const currentRow = Math.floor(y / this.cellSize);
-        const currentCol = Math.floor(x / this.cellSize);
+        // 坐标转换
+        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
+        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
+        const currentRow = Math.floor(canvasY / this.cellSize);
+        const currentCol = Math.floor(canvasX / this.cellSize);
 
         // 检查是否移动到了新的格子
         if (currentRow >= 0 && currentRow < this.gridSize &&
@@ -257,8 +281,19 @@ class GameEngine {
     }
 
     processClick(x, y) {
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
+        // 获取实际画布显示尺寸
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / (window.devicePixelRatio || 1) / rect.width;
+        const scaleY = this.canvas.height / (window.devicePixelRatio || 1) / rect.height;
+
+        // 转换坐标到画布坐标系
+        const canvasX = x * scaleX;
+        const canvasY = y * scaleY;
+
+        const col = Math.floor(canvasX / this.cellSize);
+        const row = Math.floor(canvasY / this.cellSize);
+
+        console.log('Click:', {x, y, canvasX, canvasY, col, row, cellSize: this.cellSize});
 
         if (col < 0 || col >= this.gridSize || row < 0 || row >= this.gridSize) {
             return;
