@@ -40,8 +40,10 @@ class UserManager {
         // 如果没有Telegram用户数据，创建默认用户
         if (!telegramUser) {
             console.warn('No Telegram user data available, using guest user');
+            const guestId = 'guest_' + Date.now();
             telegramUser = {
-                id: 'guest_' + Date.now(),
+                id: guestId,
+                telegramId: guestId, // 添加telegramId字段
                 username: 'guest_user',
                 first_name: '游客用户',
                 photo_url: 'images/default-avatar.png',
@@ -50,7 +52,7 @@ class UserManager {
         }
 
         // 尝试从数据库加载用户
-        let user = await window.dbManager.getUser(telegramUser.id);
+        let user = await window.dbManager.getUser(telegramUser.telegramId || telegramUser.id);
 
         if (!user) {
             // 创建新用户

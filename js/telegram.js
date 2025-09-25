@@ -197,7 +197,7 @@ class TelegramIntegration {
 
     // 显示弹窗
     showAlert(message) {
-        if (this.tg?.showAlert) {
+        if (this.tg?.showAlert && this.tg.version >= '6.2') {
             this.tg.showAlert(message);
         } else {
             alert(message);
@@ -206,7 +206,7 @@ class TelegramIntegration {
 
     // 显示确认框
     showConfirm(message, callback) {
-        if (this.tg?.showConfirm) {
+        if (this.tg?.showConfirm && this.tg.version >= '6.2') {
             this.tg.showConfirm(message, callback);
         } else {
             const result = confirm(message);

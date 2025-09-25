@@ -246,9 +246,21 @@ class GameApp {
     }
 
     async startGame() {
-        const success = await window.gameEngine?.startGame();
-        if (success) {
-            this.showScreen('game-screen');
+        try {
+            const success = await window.gameEngine?.startGame();
+            if (success) {
+                this.showScreen('game-screen');
+            } else {
+                console.error('游戏启动失败');
+                if (window.uiManager) {
+                    window.uiManager.showNotification('游戏启动失败，请重试', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('启动游戏时出错:', error);
+            if (window.uiManager) {
+                window.uiManager.showNotification('游戏启动失败，请重试', 'error');
+            }
         }
     }
 

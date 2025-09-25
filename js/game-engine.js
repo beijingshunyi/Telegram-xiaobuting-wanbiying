@@ -51,11 +51,11 @@ class GameEngine {
         const containerRect = container.getBoundingClientRect();
 
         // 根据容器大小调整画布
-        const maxSize = Math.min(containerRect.width - 40, containerRect.height - 40);
+        const maxSize = Math.max(200, Math.min(containerRect.width - 40, containerRect.height - 40));
         this.canvas.width = maxSize;
         this.canvas.height = maxSize;
 
-        this.cellSize = maxSize / this.gridSize;
+        this.cellSize = Math.max(10, maxSize / this.gridSize); // 确保cellSize至少为10px
 
         // 设置画布样式
         this.canvas.style.cursor = 'pointer';
@@ -491,7 +491,7 @@ class GameEngine {
     drawBlockPattern(x, y, blockType) {
         const centerX = x + this.cellSize / 2;
         const centerY = y + this.cellSize / 2;
-        const radius = this.cellSize / 6;
+        const radius = Math.max(1, this.cellSize / 6); // 确保半径不为负
 
         this.ctx.fillStyle = '#fff';
         this.ctx.globalAlpha = 0.8;
@@ -804,7 +804,11 @@ class GameEngine {
     async startGame() {
         // 检查体力
         if (!window.userManager.hasEnoughEnergy()) {
-            window.telegramApp.showAlert('体力不足，请等待恢复或观看广告获取体力！');
+            if (window.uiManager) {
+                window.uiManager.showNotification('体力不足，请等待恢复或观看广告获取体力！', 'warning');
+            } else {
+                console.warn('体力不足');
+            }
             return false;
         }
 
