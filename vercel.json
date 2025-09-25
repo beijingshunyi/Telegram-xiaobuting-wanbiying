@@ -3,7 +3,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3.0.5"
+      "runtime": "@vercel/node@3.2.0"
     }
   },
   "rewrites": [
