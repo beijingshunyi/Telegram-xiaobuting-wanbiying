@@ -1,0 +1,382 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+    overflow-x: hidden;
+}
+
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: inherit;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 加载页面样式 */
+#loading-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+}
+
+.loading-container {
+    text-align: center;
+    color: white;
+}
+
+.game-logo h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.logo-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.loading-text {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+/* 动画 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* 主菜单样式 */
+#main-menu {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.header {
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #667eea;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.user-level {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.currency-info {
+    text-align: right;
+}
+
+.coin-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #ffa500;
+}
+
+.coin-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.energy-bar {
+    width: 120px;
+    height: 20px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.energy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #48c78e 0%, #06d6a0 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 100%;
+}
+
+.energy-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 游戏模式按钮 */
+.game-modes {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.game-mode-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.game-mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.game-mode-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mode-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.mode-text {
+    font-weight: 500;
+}
+
+/* 菜单按钮 */
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.button-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.menu-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.95);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.menu-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.btn-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.btn-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* 广告容器 */
+.ad-container {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+/* 版权信息 */
+.sponsor-info {
+    margin-top: auto;
+    padding: 1rem;
+    text-align: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.sponsor-info p {
+    margin-bottom: 0.3rem;
+}
+
+.sponsor-link {
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.sponsor-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .game-modes {
+        flex-direction: column;
+    }
+
+    .button-row {
+        flex-direction: column;
+    }
+
+    .game-logo h1 {
+        font-size: 2rem;
+    }
+}
+
+/* 模态框样式 */
+#modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    max-width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal h2 {
+    margin-bottom: 1rem;
+    color: #333;
+    text-align: center;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-close:hover {
+    color: #333;
+}
