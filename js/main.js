@@ -18,10 +18,23 @@ class GameApp {
             ]);
 
             // 等待签到系统和广告系统初始化
-            await Promise.all([
-                window.checkinSystem.initialize(),
-                window.adsManager.initialize()
-            ]);
+            const initPromises = [];
+
+            if (window.checkinSystem && window.checkinSystem.initialize) {
+                initPromises.push(window.checkinSystem.initialize());
+            } else {
+                console.warn('CheckinSystem not available');
+            }
+
+            if (window.adsManager && window.adsManager.initialize) {
+                initPromises.push(window.adsManager.initialize());
+            } else {
+                console.warn('AdsManager not available');
+            }
+
+            if (initPromises.length > 0) {
+                await Promise.all(initPromises);
+            }
 
             // 预加载资源
             await this.preloadResources();

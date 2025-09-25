@@ -35,10 +35,18 @@ class UserManager {
     }
 
     async loadOrCreateUser() {
-        const telegramUser = window.telegramApp.getUser();
+        let telegramUser = window.telegramApp.getUser();
 
+        // 如果没有Telegram用户数据，创建默认用户
         if (!telegramUser) {
-            throw new Error('No Telegram user data available');
+            console.warn('No Telegram user data available, using guest user');
+            telegramUser = {
+                id: 'guest_' + Date.now(),
+                username: 'guest_user',
+                first_name: '游客用户',
+                photo_url: 'images/default-avatar.png',
+                language_code: 'zh'
+            };
         }
 
         // 尝试从数据库加载用户

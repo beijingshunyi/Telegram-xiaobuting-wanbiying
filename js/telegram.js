@@ -26,9 +26,13 @@ class TelegramIntegration {
             this.tg.ready();
             this.tg.expand();
 
-            // 设置主题
-            this.tg.setHeaderColor('#667eea');
-            this.tg.setBackgroundColor('#667eea');
+            // 设置主题 - 检查版本兼容性
+            if (this.tg.version >= '6.1') {
+                this.tg.setHeaderColor('#667eea');
+            }
+            if (this.tg.version >= '6.1') {
+                this.tg.setBackgroundColor('#667eea');
+            }
 
             // 获取用户信息
             if (this.tg.initDataUnsafe?.user) {
@@ -70,7 +74,8 @@ class TelegramIntegration {
     }
 
     setupBackButton() {
-        if (!this.tg?.BackButton) return;
+        // BackButton需要版本6.1+
+        if (!this.tg?.BackButton || this.tg.version < '6.1') return;
 
         this.tg.BackButton.onClick(() => {
             document.dispatchEvent(new CustomEvent('telegram:backButtonClick'));
@@ -90,12 +95,12 @@ class TelegramIntegration {
     }
 
     showBackButton() {
-        if (!this.tg?.BackButton) return;
+        if (!this.tg?.BackButton || this.tg.version < '6.1') return;
         this.tg.BackButton.show();
     }
 
     hideBackButton() {
-        if (!this.tg?.BackButton) return;
+        if (!this.tg?.BackButton || this.tg.version < '6.1') return;
         this.tg.BackButton.hide();
     }
 

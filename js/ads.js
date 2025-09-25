@@ -50,9 +50,15 @@ class AdsManager {
         try {
             const response = await fetch(`${CONFIG.API.BASE_URL}/ads/manual`);
             if (response.ok) {
-                this.manualAds = await response.json();
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    this.manualAds = await response.json();
+                } else {
+                    console.warn('API返回非JSON响应，使用默认广告');
+                    this.manualAds = this.getDefaultManualAds();
+                }
             } else {
-                // 使用默认的手动广告
+                console.warn(`API请求失败: ${response.status} ${response.statusText}`);
                 this.manualAds = this.getDefaultManualAds();
             }
         } catch (error) {
