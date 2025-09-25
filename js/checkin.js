@@ -2,6 +2,7 @@ class CheckinSystem {
     constructor() {
         this.isInitialized = false;
         this.checkinModal = null;
+        this.isShowingModal = false; // 防止多重弹窗
         this.initialize();
     }
 
@@ -71,6 +72,12 @@ class CheckinSystem {
     }
 
     async showCheckinModal() {
+        // 防止多重弹窗
+        if (this.isShowingModal || this.checkinModal) {
+            console.log('签到弹窗已显示，跳过重复调用');
+            return;
+        }
+
         const user = window.userManager.getCurrentUser();
         if (!user) return;
 
@@ -82,6 +89,9 @@ class CheckinSystem {
             this.showAlreadyCheckedInModal();
             return;
         }
+
+        // 设置正在显示标志
+        this.isShowingModal = true;
 
         // 创建签到模态框
         this.createCheckinModal(user.checkinStreak);
@@ -267,12 +277,12 @@ class CheckinSystem {
             // 触觉反馈
             window.telegramApp.hapticFeedback('success');
 
-            // 移除模态框
+            // 延长显示时间，让用户看清奖励信息
             setTimeout(() => {
                 if (this.checkinModal) {
                     this.removeCheckinModal();
                 }
-            }, 3000);
+            }, 6000);
 
         } catch (error) {
             console.error('Checkin failed:', error);
@@ -563,6 +573,7 @@ class CheckinSystem {
             try {
                 window.modalManager.close();
                 this.checkinModal = null;
+                this.isShowingModal = false; // 重置标志
             } catch (error) {
                 console.error('Failed to close checkin modal:', error);
                 // 强制关闭
@@ -573,6 +584,7 @@ class CheckinSystem {
                     modalContainer.classList.remove('show', 'hide');
                 }
                 this.checkinModal = null;
+                this.isShowingModal = false; // 重置标志
             }
         }
     }

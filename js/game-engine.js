@@ -66,16 +66,36 @@ class GameEngine {
         const container = this.canvas.parentElement;
         const containerRect = container.getBoundingClientRect();
 
-        // 根据容器大小调整画布
-        const maxSize = Math.max(200, Math.min(containerRect.width - 40, containerRect.height - 40));
-        this.canvas.width = maxSize;
-        this.canvas.height = maxSize;
+        // 获取设备像素比，解决模糊问题
+        const devicePixelRatio = window.devicePixelRatio || 1;
 
-        this.cellSize = Math.max(10, maxSize / this.gridSize); // 确保cellSize至少为10px
+        // 优化画布大小，使其更大更适合手机端
+        const containerWidth = Math.min(containerRect.width - 20, 450);
+        const containerHeight = Math.min(containerRect.height - 20, 450);
+        const maxSize = Math.min(containerWidth, containerHeight);
+
+        // 设置实际显示大小
+        this.canvas.style.width = maxSize + 'px';
+        this.canvas.style.height = maxSize + 'px';
+
+        // 设置实际像素大小（考虑设备像素比）
+        this.canvas.width = maxSize * devicePixelRatio;
+        this.canvas.height = maxSize * devicePixelRatio;
+
+        // 缩放画布上下文以适应设备像素比
+        this.ctx.scale(devicePixelRatio, devicePixelRatio);
+
+        this.cellSize = Math.max(35, maxSize / this.gridSize); // 增加最小cell大小
 
         // 设置画布样式
         this.canvas.style.cursor = 'pointer';
         this.canvas.style.borderRadius = '15px';
+        this.canvas.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+        this.canvas.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+
+        // 启用更好的渲染
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
     }
 
     setupEventListeners() {
@@ -347,8 +367,12 @@ class GameEngine {
                                cell.row * this.cellSize + this.cellSize / 2);
         });
 
-        // 播放消除音效和触觉反馈
-        this.playSound('match');
+        // 播放消除音效和触觉反馈（基于匹配数量）
+        if (window.audioManager) {
+            window.audioManager.onMatch(removedCells.length);
+        } else {
+            this.playSound('match');
+        }
         window.telegramApp.hapticFeedback('medium');
 
         this.render();
@@ -533,8 +557,12 @@ class GameEngine {
                                    match.row * this.cellSize + this.cellSize / 2);
             });
 
-            // 播放消除音效
-            this.playSound('match');
+            // 播放消除音效（基于匹配数量）
+            if (window.audioManager) {
+                window.audioManager.onMatch(matches.length);
+            } else {
+                this.playSound('match');
+            }
 
             // 触觉反馈
             window.telegramApp.hapticFeedback('medium');
@@ -1017,13 +1045,42 @@ class GameEngine {
 
     playSound(soundType) {
         try {
-            const audio = document.getElementById(`${soundType}-sound`);
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
+            if (window.audioManager) {
+                // 映射游戏引擎的音效名称到AudioManager的方法
+                switch(soundType) {
+                    case 'match':
+                        window.audioManager.onMatch(1);
+                        break;
+                    case 'button':
+                        window.audioManager.onButtonClick();
+                        break;
+                    case 'level-complete':
+                        window.audioManager.onLevelComplete();
+                        break;
+                    case 'game-over':
+                        window.audioManager.onGameOver();
+                        break;
+                    case 'shuffle':
+                        window.audioManager.onShuffle();
+                        break;
+                    case 'coin':
+                        window.audioManager.onCoinEarned();
+                        break;
+                    default:
+                        // 尝试直接播放音效
+                        window.audioManager.playSound(soundType);
+                        break;
+                }
+            } else {
+                // 备用方案：直接使用HTML音频元素
+                const audio = document.getElementById(`${soundType}-sound`);
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                }
             }
         } catch (error) {
-            // 忽略音效播放错误
+            console.warn('Failed to play sound:', soundType, error);
         }
     }
 

@@ -527,40 +527,254 @@ body {
 }
 
 /* 响应式设计 */
+@media (max-width: 768px) {
+    /* 平板设备优化 */
+    .header {
+        padding: 12px 18px;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .user-info {
+        gap: 12px;
+    }
+
+    .currency-info {
+        gap: 8px;
+    }
+
+    .coin-count {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .energy-bar {
+        width: 100px;
+    }
+
+    .game-mode-btn {
+        padding: 18px;
+        gap: 15px;
+    }
+
+    .mode-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 32px;
+    }
+
+    .button-row {
+        gap: 12px;
+    }
+
+    .menu-btn {
+        padding: 14px 10px;
+    }
+}
+
 @media (max-width: 480px) {
+    /* 手机端专用优化 */
+    body {
+        font-size: 14px;
+    }
+
+    #main-menu {
+        padding: 15px;
+    }
+
     .header {
         padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+
+    .user-info {
+        gap: 10px;
     }
 
     .user-avatar {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
+    }
+
+    .user-avatar::before {
+        font-size: 24px;
     }
 
     .username {
+        font-size: 15px;
+    }
+
+    .user-level {
+        font-size: 12px;
+    }
+
+    .currency-info {
+        gap: 6px;
+    }
+
+    .coin-count {
+        padding: 5px 10px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .coin-count::before {
         font-size: 16px;
+    }
+
+    .energy-bar {
+        width: 80px;
+        height: 6px;
+    }
+
+    .energy-text {
+        font-size: 10px;
+        margin-top: 3px;
+    }
+
+    .game-modes {
+        gap: 15px;
+        margin-bottom: 25px;
     }
 
     .game-mode-btn {
         padding: 15px;
+        gap: 12px;
+        border-radius: 18px;
     }
 
     .mode-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 30px;
+        width: 45px;
+        height: 45px;
+        font-size: 28px;
     }
 
     .mode-text {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .menu-buttons {
+        gap: 12px;
     }
 
     .button-row {
-        gap: 10px;
+        gap: 8px;
     }
 
     .menu-btn {
-        padding: 12px 8px;
+        padding: 12px 6px;
+        border-radius: 15px;
+    }
+
+    .btn-icon {
+        font-size: 20px;
+    }
+
+    .btn-text {
+        font-size: 10px;
+    }
+
+    .btn-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+        top: -3px;
+        right: -3px;
+    }
+}
+
+@media (max-width: 360px) {
+    /* 小屏手机特别优化 */
+    body {
+        font-size: 13px;
+    }
+
+    #main-menu {
+        padding: 12px;
+    }
+
+    .header {
+        padding: 8px 12px;
+        border-radius: 15px;
+    }
+
+    .user-info {
+        gap: 8px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .user-avatar::before {
+        font-size: 20px;
+    }
+
+    .username {
+        font-size: 14px;
+    }
+
+    .user-level {
+        font-size: 11px;
+    }
+
+    .coin-count {
+        padding: 4px 8px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+
+    .coin-count::before {
+        font-size: 14px;
+    }
+
+    .energy-bar {
+        width: 70px;
+        height: 5px;
+    }
+
+    .energy-text {
+        font-size: 9px;
+    }
+
+    .game-mode-btn {
+        padding: 12px;
+        gap: 10px;
+        border-radius: 15px;
+    }
+
+    .mode-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+    }
+
+    .mode-text {
+        font-size: 14px;
+    }
+
+    .button-row {
+        gap: 6px;
+    }
+
+    .menu-btn {
+        padding: 10px 4px;
+        border-radius: 12px;
+    }
+
+    .btn-icon {
+        font-size: 18px;
+    }
+
+    .btn-text {
+        font-size: 9px;
+    }
+
+    .btn-badge {
+        width: 14px;
+        height: 14px;
+        font-size: 9px;
     }
 }
 

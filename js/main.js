@@ -232,6 +232,13 @@ class GameApp {
         if (screen) {
             screen.classList.remove('hidden');
             this.currentScreen = screenName;
+
+            // 当显示主菜单时启动背景音乐
+            if (screenName === 'main-menu' && window.audioManager) {
+                setTimeout(() => {
+                    window.audioManager.playMusic();
+                }, 500);
+            }
         }
 
         // 更新Telegram按钮状态
@@ -698,11 +705,19 @@ class GameApp {
     }
 
     inviteFriends() {
-        // Use the dedicated social manager if available
-        if (window.socialManager && typeof window.socialManager.showInviteModal === 'function') {
-            window.socialManager.showInviteModal();
-        } else {
-            // Fallback to simple Telegram share
+        try {
+            // Use the dedicated social manager if available
+            if (window.socialManager && typeof window.socialManager.showInviteModal === 'function') {
+                console.log('使用社交管理器显示邀请弹窗');
+                window.socialManager.showInviteModal();
+            } else {
+                console.log('社交管理器不可用，使用简单的Telegram分享');
+                // Fallback to simple Telegram share
+                window.telegramApp.inviteFriend();
+            }
+        } catch (error) {
+            console.error('邀请好友功能出错:', error);
+            // 最终备用方案
             window.telegramApp.inviteFriend();
         }
     }

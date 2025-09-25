@@ -26,7 +26,24 @@ class AdsManager {
         // 检查每日广告计数
         this.checkDailyAdReset();
 
+        // 强制显示横幅广告 - 确保广告能够显示
+        setTimeout(() => {
+            this.forceShowBannerAd();
+        }, 1000);
+
         console.log('AdsManager initialized');
+    }
+
+    // 强制显示横幅广告
+    forceShowBannerAd() {
+        const bannerContainer = document.getElementById('banner-ad');
+        if (bannerContainer && this.manualAds.length > 0) {
+            // 清除现有内容
+            bannerContainer.innerHTML = '';
+            // 重新显示手动广告
+            this.showManualBannerAd();
+            console.log('Banner ad force displayed');
+        }
     }
 
     async initializeAdMob() {
@@ -122,21 +139,42 @@ class AdsManager {
         const ad = this.selectRandomAd();
         if (!ad) return;
 
-        bannerContainer.innerHTML = `
-            <div class="manual-banner-ad" onclick="window.adsManager.onAdClick('${ad.id}')">
-                <div class="ad-content">
-                    <div class="ad-image">
-                        <img src="${ad.imageUrl || ad.thumbnailUrl}" alt="${ad.title}" onerror="this.style.display='none'">
+        // 专为社交广告优化显示
+        if (ad.type === 'social') {
+            bannerContainer.innerHTML = `
+                <div class="manual-banner-ad social-banner" onclick="window.adsManager.onAdClick('${ad.id}')">
+                    <div class="social-banner-content">
+                        <div class="social-icon">👥</div>
+                        <div class="social-text">
+                            <h4>${ad.title}</h4>
+                            <p>${ad.description}</p>
+                            <div class="contact-info">
+                                <span class="contact-link">${ad.contact}</span>
+                                <button class="quick-contact-btn">立即联系</button>
+                            </div>
+                            <span class="ad-sponsor">由 ${ad.sponsor} 提供</span>
+                        </div>
                     </div>
-                    <div class="ad-text">
-                        <h4>${ad.title}</h4>
-                        <p>${ad.description}</p>
-                        <span class="ad-sponsor">由 ${ad.sponsor} 提供</span>
-                    </div>
+                    <div class="ad-badge">广告</div>
                 </div>
-                <div class="ad-badge">广告</div>
-            </div>
-        `;
+            `;
+        } else {
+            bannerContainer.innerHTML = `
+                <div class="manual-banner-ad" onclick="window.adsManager.onAdClick('${ad.id}')">
+                    <div class="ad-content">
+                        <div class="ad-image">
+                            <img src="${ad.imageUrl || ad.thumbnailUrl}" alt="${ad.title}" onerror="this.style.display='none'">
+                        </div>
+                        <div class="ad-text">
+                            <h4>${ad.title}</h4>
+                            <p>${ad.description}</p>
+                            <span class="ad-sponsor">由 ${ad.sponsor} 提供</span>
+                        </div>
+                    </div>
+                    <div class="ad-badge">广告</div>
+                </div>
+            `;
+        }
     }
 
     selectRandomAd() {
@@ -853,6 +891,118 @@ adStyles.textContent = `
         background: white;
         color: #667eea;
         transform: translateY(-1px);
+    }
+
+    /* 社交横幅广告样式 */
+    .social-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 2px solid rgba(255,255,255,0.3);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .social-banner-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: white;
+        padding: 0.5rem;
+    }
+
+    .social-banner .social-icon {
+        font-size: 2.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .social-text {
+        flex: 1;
+        text-align: left;
+    }
+
+    .social-text h4 {
+        font-size: 1.1rem;
+        margin: 0 0 0.3rem 0;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .social-text p {
+        font-size: 0.9rem;
+        margin: 0 0 0.5rem 0;
+        opacity: 0.95;
+        line-height: 1.3;
+    }
+
+    .social-banner .contact-info {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .social-banner .contact-link {
+        background: rgba(255,255,255,0.25);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-weight: 700;
+        color: #ffeaa7;
+        border: 1px solid rgba(255,255,255,0.3);
+        font-size: 0.95rem;
+    }
+
+    .quick-contact-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid white;
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+    }
+
+    .quick-contact-btn:hover {
+        background: white;
+        color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .social-banner .ad-sponsor {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        font-style: italic;
+    }
+
+    @media (max-width: 480px) {
+        .social-banner-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.8rem;
+        }
+
+        .social-banner .social-icon {
+            font-size: 2rem;
+        }
+
+        .social-text h4 {
+            font-size: 1rem;
+        }
+
+        .social-text p {
+            font-size: 0.85rem;
+        }
+
+        .social-banner .contact-info {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .quick-contact-btn {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+        }
     }
 `;
 

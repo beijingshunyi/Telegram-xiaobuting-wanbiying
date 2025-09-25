@@ -63,8 +63,10 @@ class SocialManager {
 
     // 显示邀请模态框
     showInviteModal() {
-        const inviteLink = this.generateInviteLink();
-        const inviteCode = this.generateInviteCode();
+        console.log('显示邀请好友弹窗');
+        try {
+            const inviteLink = this.generateInviteLink();
+            const inviteCode = this.generateInviteCode();
 
         const content = `
             <div class="modal-header">
@@ -123,10 +125,9 @@ class SocialManager {
                 </div>
         `;
 
-        try {
             return window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
         } catch (error) {
-            console.error('Failed to show invite modal:', error);
+            console.error('邀请弹窗显示失败:', error);
             // 降级到简单的邀请分享
             window.telegramApp.inviteFriend();
         }

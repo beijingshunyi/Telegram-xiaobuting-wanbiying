@@ -393,10 +393,15 @@ class UserManager {
     // 播放金币音效
     playCoinSound() {
         try {
-            const audio = document.getElementById('coin-sound');
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {}); // 忽略播放失败
+            if (window.audioManager) {
+                window.audioManager.onCoinEarned();
+            } else {
+                // 备用方案：直接使用HTML音频元素
+                const audio = document.getElementById('coin-sound');
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {}); // 忽略播放失败
+                }
             }
         } catch (error) {
             // 忽略音效播放错误

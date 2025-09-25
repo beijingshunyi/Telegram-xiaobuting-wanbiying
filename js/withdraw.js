@@ -40,12 +40,10 @@ class WithdrawManager {
         this.minAmounts.usdt = Math.ceil(usdMinAmount * this.usdtRate * CONFIG.CURRENCY.RATE_TO_RMB / 10);
     }
 
-    // 设置事件监听器
+    // 设置事件监听器 - 现在由main.js统一处理，避免重复监听
     setupEventListeners() {
-        const withdrawBtn = document.getElementById('withdraw-btn');
-        if (withdrawBtn) {
-            withdrawBtn.addEventListener('click', () => this.showWithdrawModal());
-        }
+        // 原来的重复监听器已移除，现在由main.js的showWithdraw()方法调用
+        console.log('WithdrawManager event listeners setup completed');
     }
 
     // 显示提现模态框
