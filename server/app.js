@@ -368,22 +368,27 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-    console.log(`🎮 消不停·万币赢 Server running on port ${PORT}`);
-    console.log(`🌐 Game URL: http://localhost:${PORT}`);
-    console.log(`🗄️  Database: ${dbManager.getType()}`);
-    if (bot) {
-        console.log('🤖 Telegram Bot is running');
-    }
-});
+// 启动服务器（仅在非Vercel环境）
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`🎮 消不停·万币赢 Server running on port ${PORT}`);
+        console.log(`🌐 Game URL: http://localhost:${PORT}`);
+        console.log(`🗄️  Database: ${dbManager.getType()}`);
+        if (bot) {
+            console.log('🤖 Telegram Bot is running');
+        }
+    });
 
-// 优雅关闭
-process.on('SIGINT', () => {
-    console.log('\n🛑 Shutting down server...');
-    dbManager.close();
-    if (bot) {
-        bot.stopPolling();
-    }
-    process.exit(0);
-});
+    // 优雅关闭
+    process.on('SIGINT', () => {
+        console.log('\n🛑 Shutting down server...');
+        dbManager.close();
+        if (bot) {
+            bot.stopPolling();
+        }
+        process.exit(0);
+    });
+}
+
+// 导出app供Vercel使用
+module.exports = app;
