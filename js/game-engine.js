@@ -903,6 +903,55 @@ class GameEngine {
         document.getElementById('game-canvas-container').appendChild(modal);
     }
 
+    showTimeUpModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-container time-up-modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>⏰ 时间到！</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="time-up-content">
+                        <div class="time-up-icon">⏰</div>
+                        <h3>游戏结束</h3>
+                        <p>很遗憾，时间用完了！</p>
+                        <div class="final-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">最终得分：</span>
+                                <span class="stat-value">${this.score.toLocaleString()}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">目标达成：</span>
+                                <span class="stat-value">${Math.floor((this.score / this.targetScore) * 100)}%</span>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn btn-primary" onclick="window.gameEngine.restartLevel(); this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                🔄 重新开始
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.gameEngine.backToMenu(); this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                🏠 返回菜单
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // 播放游戏结束音效
+        this.playSound('game-over');
+
+        // 触觉反馈
+        if (window.telegramApp) {
+            window.telegramApp.hapticFeedback('error');
+        }
+    }
+
     nextLevel() {
         this.level++;
         this.targetScore = Math.floor(this.targetScore * CONFIG.BALANCE.LEVEL_DIFFICULTY_INCREASE);
@@ -1011,10 +1060,18 @@ class GameEngine {
         // 总游戏时间倒计时
         this.gameTimer = setInterval(() => {
             this.timeLeft--;
+            // 确保时间不会变成负数
+            if (this.timeLeft < 0) {
+                this.timeLeft = 0;
+            }
             this.updateGameUI();
 
+            // 时间归零立即结束游戏
             if (this.timeLeft <= 0) {
-                this.checkGameEnd();
+                this.stopTimers(); // 停止所有计时器
+                this.gameState = 'gameover';
+                this.showTimeUpModal(); // 显示时间到弹窗
+                return;
             }
         }, 1000);
 

@@ -455,7 +455,7 @@ class GameApp {
                     </div>
                     <div class="tool-purchase">
                         <div class="tool-price">
-                            <img src="images/coin-icon.png" alt="万花币" class="mini-coin">
+                            <span class="emoji-icon mini-coin">🪙</span>
                             <span>${tool.price}</span>
                         </div>
                         <button class="buy-btn" data-tool="${toolType}" data-price="${tool.price}">
@@ -563,7 +563,7 @@ class GameApp {
                 <div class="withdraw-balance">
                     <h3>可提现余额</h3>
                     <div class="balance-display">
-                        <img src="images/coin-icon.png" alt="万花币" class="coin-icon">
+                        <span class="emoji-icon coin-icon">🪙</span>
                         <span class="balance-amount">${window.userManager.getCurrentUser()?.coins || 0}</span>
                     </div>
                     <p class="balance-note">= ${((window.userManager.getCurrentUser()?.coins || 0) / 100).toFixed(2)} 元</p>

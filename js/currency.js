@@ -276,16 +276,10 @@ class CurrencyManager {
         const stats = this.getUserStatus();
         const progressPercent = (stats.monthlyEarnings / stats.monthlyLimit) * 100;
 
-        const modal = document.createElement('div');
-        modal.className = 'modal-container';
-        modal.style.display = 'flex';
-
-        modal.innerHTML = `
-            <div class="modal">
-                <div class="modal-header">
-                    <h2>💰 万花币月度统计</h2>
-                    <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
-                </div>
+        const content = `
+            <div class="modal-header">
+                <h2>💰 万花币月度统计</h2>
+            </div>
                 <div class="modal-body">
                     <div class="stats-container">
                         <div class="user-type-info">
@@ -348,10 +342,7 @@ class CurrencyManager {
             </div>
         `;
 
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('show'), 10);
-
-        return modal;
+        return window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
     }
 }
 

@@ -91,17 +91,11 @@ class CheckinSystem {
         // 移除已存在的模态框
         this.removeCheckinModal();
 
-        const modal = document.createElement('div');
-        modal.id = 'checkin-modal';
-        modal.className = 'modal-container';
-        modal.style.display = 'flex';
-
         const rewards = CONFIG.CURRENCY.SIGN_IN_BONUS;
         const nextReward = rewards[Math.min(currentStreak, rewards.length - 1)];
 
-        modal.innerHTML = `
-            <div class="modal checkin-modal">
-                <button class="modal-close" onclick="window.checkinSystem.removeCheckinModal()">&times;</button>
+        const content = `
+            <div class="checkin-modal">
                 <div class="checkin-header">
                     <h2>📅 每日签到</h2>
                     <p>连续签到可获得更多奖励！</p>
@@ -151,11 +145,7 @@ class CheckinSystem {
             </div>
         `;
 
-        document.body.appendChild(modal);
-        this.checkinModal = modal;
-
-        // 添加动画效果
-        setTimeout(() => modal.classList.add('show'), 10);
+        this.checkinModal = window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
     }
 
     generateCheckinCalendar(currentStreak) {
@@ -301,11 +291,24 @@ class CheckinSystem {
         const modal = document.querySelector('.checkin-modal .modal');
         if (!modal) return;
 
+        const userName = window.userManager?.getCurrentUser()?.first_name || '亲爱的玩家';
+        const encouragement = this.getEncouragementMessage(streak);
+
         modal.innerHTML = `
             <div class="checkin-success">
                 <div class="success-animation">
-                    <div class="success-icon">✨</div>
-                    <h2>签到成功！</h2>
+                    <div class="success-icon">🎉</div>
+                    <h2>恭喜签到成功！</h2>
+                    <p class="congratulations-text">恭喜 <span class="user-highlight">${userName}</span> 签到成功！</p>
+                </div>
+
+                <div class="streak-highlight">
+                    <div class="streak-main">
+                        <span class="streak-label">连续签到</span>
+                        <span class="streak-number">${streak}</span>
+                        <span class="streak-unit">天</span>
+                    </div>
+                    <p class="streak-message">${encouragement}</p>
                 </div>
 
                 <div class="success-rewards">
@@ -316,19 +319,17 @@ class CheckinSystem {
 
                     ${hasBonus ? `
                         <div class="bonus-reward">
-                            <span class="bonus-text">🎉 七天连续签到奖励！</span>
+                            <div class="bonus-icon">🌟</div>
+                            <span class="bonus-text">七天连续签到特殊奖励！</span>
                         </div>
                     ` : ''}
                 </div>
 
-                <div class="streak-display">
-                    <h3>连续签到</h3>
-                    <div class="streak-number">${streak}</div>
-                    <p>天</p>
-                </div>
-
-                <div class="next-reward">
-                    <p>明天继续签到可获得 <strong>${this.getNextDayReward(streak)} ${CONFIG.CURRENCY.NAME}</strong></p>
+                <div class="tomorrow-preview">
+                    <div class="preview-icon">📅</div>
+                    <p>明天继续签到可获得</p>
+                    <div class="next-reward-amount">+${this.getNextDayReward(streak)} ${CONFIG.CURRENCY.NAME}</div>
+                    <p class="keep-going">坚持签到，奖励更丰厚！</p>
                 </div>
             </div>
         `;
@@ -342,18 +343,67 @@ class CheckinSystem {
             }
 
             .success-animation {
-                margin-bottom: 2rem;
+                margin-bottom: 1.5rem;
             }
 
             .success-icon {
-                font-size: 4rem;
+                font-size: 3rem;
                 animation: successBounce 0.8s ease-in-out;
-                margin-bottom: 1rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .congratulations-text {
+                font-size: 1.1rem;
+                color: #333;
+                margin: 0.5rem 0;
+            }
+
+            .user-highlight {
+                color: #667eea;
+                font-weight: bold;
+            }
+
+            .streak-highlight {
+                background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+                color: white;
+                border-radius: 15px;
+                padding: 1.5rem;
+                margin: 1.5rem 0;
+            }
+
+            .streak-main {
+                display: flex;
+                align-items: baseline;
+                justify-content: center;
+                gap: 0.5rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .streak-label {
+                font-size: 1rem;
+                font-weight: 500;
+            }
+
+            .streak-number {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #ffeaa7;
+            }
+
+            .streak-unit {
+                font-size: 1.2rem;
+                font-weight: 500;
+            }
+
+            .streak-message {
+                font-size: 1rem;
+                margin: 0;
+                opacity: 0.9;
             }
 
             .success-rewards {
-                margin: 2rem 0;
-                padding: 1.5rem;
+                margin: 1.5rem 0;
+                padding: 1.2rem;
                 background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
                 border-radius: 15px;
                 color: #2d3436;
@@ -364,26 +414,50 @@ class CheckinSystem {
                 align-items: center;
                 justify-content: center;
                 gap: 0.5rem;
-                font-size: 1.2rem;
-                font-weight: 600;
+                font-size: 1.3rem;
+                font-weight: bold;
             }
 
             .bonus-reward {
                 margin-top: 1rem;
-                padding: 0.5rem;
+                padding: 0.8rem;
                 background: rgba(255,255,255,0.3);
-                border-radius: 8px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
             }
 
-            .streak-display {
-                margin: 2rem 0;
+            .bonus-icon {
+                font-size: 1.2rem;
             }
 
-            .streak-number {
-                font-size: 3rem;
+            .tomorrow-preview {
+                background: #e8f4f8;
+                border-radius: 15px;
+                padding: 1.5rem;
+                margin: 1.5rem 0;
+                color: #2d3436;
+            }
+
+            .preview-icon {
+                font-size: 2rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .next-reward-amount {
+                font-size: 1.4rem;
                 font-weight: bold;
                 color: #0984e3;
-                margin: 0.5rem 0;
+                margin: 0.8rem 0;
+            }
+
+            .keep-going {
+                font-size: 0.9rem;
+                color: #636e72;
+                margin: 0.5rem 0 0 0;
+                font-style: italic;
             }
 
             @keyframes successBounce {
@@ -407,61 +481,67 @@ class CheckinSystem {
         return rewards[nextDay];
     }
 
+    getEncouragementMessage(streak) {
+        if (streak === 1) {
+            return "签到之旅开始啦！🌟";
+        } else if (streak <= 3) {
+            return "很棒！继续保持！💪";
+        } else if (streak <= 7) {
+            return "太厉害了！即将达成一周连签成就！🔥";
+        } else if (streak === 7) {
+            return "恭喜！成功连续签到一周！🎉";
+        } else if (streak <= 14) {
+            return "连签达人！向着两周目标前进！⭐";
+        } else if (streak <= 21) {
+            return "连签王者！马上就是三周啦！👑";
+        } else if (streak <= 30) {
+            return "超级玩家！连签即将满月！🌕";
+        } else if (streak === 30) {
+            return "连签满月！你已经是资深用户了！🏆";
+        } else {
+            return "连签传奇！你就是签到界的王者！🚀";
+        }
+    }
+
     showAlreadyCheckedInModal() {
         this.removeCheckinModal();
 
-        const modal = document.createElement('div');
-        modal.id = 'checkin-modal';
-        modal.className = 'modal-container';
-        modal.style.display = 'flex';
-
         const user = window.userManager.getCurrentUser();
 
-        modal.innerHTML = `
-            <div class="modal">
-                <button class="modal-close" onclick="window.checkinSystem.removeCheckinModal()">&times;</button>
-                <div class="already-checkedin">
-                    <div class="checkedin-icon">✅</div>
-                    <h2>今日已签到</h2>
-                    <p>您今天已经完成签到了！</p>
+        const content = `
+            <div class="already-checkedin">
+                <div class="checkedin-icon">✅</div>
+                <h2>今日已签到</h2>
+                <p>您今天已经完成签到了！</p>
 
-                    <div class="current-streak">
-                        <h3>当前连续签到</h3>
-                        <div class="streak-number">${user.checkinStreak}</div>
-                        <p>天</p>
-                    </div>
-
-                    <div class="tomorrow-reminder">
-                        <p>明天记得继续签到哦！</p>
-                        <p>可获得 <strong>${this.getNextDayReward(user.checkinStreak)} ${CONFIG.CURRENCY.NAME}</strong></p>
-                    </div>
-
-                    <button class="checkin-btn primary" onclick="window.checkinSystem.removeCheckinModal()">
-                        知道了
-                    </button>
+                <div class="current-streak">
+                    <h3>当前连续签到</h3>
+                    <div class="streak-number">${user.checkinStreak}</div>
+                    <p>天</p>
                 </div>
 
-                <div class="sponsor-info">
-                    <p>本功能由"${CONFIG.COPYRIGHT.SPONSOR}"提供技术支持</p>
+                <div class="tomorrow-reminder">
+                    <p>明天记得继续签到哦！</p>
+                    <p>可获得 <strong>${this.getNextDayReward(user.checkinStreak)} ${CONFIG.CURRENCY.NAME}</strong></p>
                 </div>
+
+                <button class="checkin-btn primary" onclick="window.checkinSystem.removeCheckinModal()">
+                    知道了
+                </button>
+            </div>
+
+            <div class="sponsor-info">
+                <p>本功能由"${CONFIG.COPYRIGHT.SPONSOR}"提供技术支持</p>
             </div>
         `;
 
-        document.body.appendChild(modal);
-        this.checkinModal = modal;
-
-        setTimeout(() => modal.classList.add('show'), 10);
+        this.checkinModal = window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
     }
 
     removeCheckinModal() {
         if (this.checkinModal) {
-            this.checkinModal.classList.add('hide');
-            setTimeout(() => {
-                if (this.checkinModal && this.checkinModal.parentNode) {
-                    this.checkinModal.parentNode.removeChild(this.checkinModal);
-                }
-                this.checkinModal = null;
-            }, 300);
+            window.modalManager.close();
+            this.checkinModal = null;
         }
     }
 

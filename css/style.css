@@ -324,6 +324,23 @@ body {
     }
 }
 
+/* Emoji图标样式 */
+.emoji-icon {
+    display: inline-block;
+    font-style: normal;
+    vertical-align: middle;
+}
+
+.emoji-icon.mini-coin {
+    font-size: 1rem;
+    margin-right: 0.3rem;
+}
+
+.emoji-icon.coin-icon {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+}
+
 /* 模态框样式 */
 #modal-container {
     position: fixed;
