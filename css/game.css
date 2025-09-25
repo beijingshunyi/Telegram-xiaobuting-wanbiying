@@ -362,3 +362,37 @@
         padding: 0.5rem;
     }
 }
+
+/* 时间警告动画 */
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* 洗牌通知动画 */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+/* 目标完成样式 */
+.objective-item.completed {
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid #4CAF50;
+    color: #2E7D32;
+}
+
+.objective-item.completed .objective-progress {
+    color: #4CAF50;
+    font-weight: bold;
+}

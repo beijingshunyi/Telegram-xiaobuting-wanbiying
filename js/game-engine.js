@@ -1,12 +1,12 @@
-// 方块类型定义
+// 水果方块类型定义
 const BLOCK_TYPES = {
     EMPTY: 0,
-    RED: 1,
-    BLUE: 2,
-    GREEN: 3,
-    YELLOW: 4,
-    PURPLE: 5,
-    ORANGE: 6,
+    APPLE: 1,        // 苹果 (原RED)
+    ORANGE: 2,       // 橙子 (原BLUE)
+    BANANA: 3,       // 香蕉 (原GREEN)
+    GRAPE: 4,        // 葡萄 (原YELLOW)
+    STRAWBERRY: 5,   // 草莓 (原PURPLE)
+    WATERMELON: 6,   // 西瓜 (原ORANGE)
     // 特殊方块
     HORIZONTAL_STRIPED: 10,
     VERTICAL_STRIPED: 11,
@@ -14,14 +14,24 @@ const BLOCK_TYPES = {
     COLOR_BOMB: 13
 };
 
-// 方块颜色映射
+// 水果表情和颜色映射
+const FRUIT_DATA = {
+    [BLOCK_TYPES.APPLE]: { emoji: '🍎', color: '#ff6b6b', name: '苹果' },
+    [BLOCK_TYPES.ORANGE]: { emoji: '🍊', color: '#ffa726', name: '橙子' },
+    [BLOCK_TYPES.BANANA]: { emoji: '🍌', color: '#ffeb3b', name: '香蕉' },
+    [BLOCK_TYPES.GRAPE]: { emoji: '🍇', color: '#9c27b0', name: '葡萄' },
+    [BLOCK_TYPES.STRAWBERRY]: { emoji: '🍓', color: '#e91e63', name: '草莓' },
+    [BLOCK_TYPES.WATERMELON]: { emoji: '🍉', color: '#4caf50', name: '西瓜' }
+};
+
+// 保持向后兼容性
 const BLOCK_COLORS = {
-    [BLOCK_TYPES.RED]: '#FF6B6B',
-    [BLOCK_TYPES.BLUE]: '#4ECDC4',
-    [BLOCK_TYPES.GREEN]: '#45B7D1',
-    [BLOCK_TYPES.YELLOW]: '#FFA726',
-    [BLOCK_TYPES.PURPLE]: '#AB47BC',
-    [BLOCK_TYPES.ORANGE]: '#FF7043'
+    [BLOCK_TYPES.APPLE]: FRUIT_DATA[BLOCK_TYPES.APPLE].color,
+    [BLOCK_TYPES.ORANGE]: FRUIT_DATA[BLOCK_TYPES.ORANGE].color,
+    [BLOCK_TYPES.BANANA]: FRUIT_DATA[BLOCK_TYPES.BANANA].color,
+    [BLOCK_TYPES.GRAPE]: FRUIT_DATA[BLOCK_TYPES.GRAPE].color,
+    [BLOCK_TYPES.STRAWBERRY]: FRUIT_DATA[BLOCK_TYPES.STRAWBERRY].color,
+    [BLOCK_TYPES.WATERMELON]: FRUIT_DATA[BLOCK_TYPES.WATERMELON].color
 };
 
 class GameEngine {
@@ -35,11 +45,17 @@ class GameEngine {
         this.level = 1;
         this.moves = CONFIG.GAME.INITIAL_MOVES;
         this.targetScore = 1000;
+        this.timeLeft = 60; // 60秒倒计时
+        this.maxTimePerMove = 10; // 每步最多10秒
+        this.currentMoveStartTime = null;
+        this.gameTimer = null;
+        this.moveTimer = null;
         this.isAnimating = false;
         this.selectedCell = null;
         this.combo = 0;
         this.particles = [];
         this.gameState = 'waiting'; // waiting, playing, paused, completed, gameover
+        this.objectives = {}; // 游戏目标
 
         this.setupCanvas();
         this.setupEventListeners();
@@ -148,6 +164,7 @@ class GameEngine {
         if (matches.length > 0) {
             // 有效移动
             this.moves--;
+            this.resetMoveTimer(); // 重置移动计时器
             this.updateGameUI();
 
             // 处理匹配
@@ -160,6 +177,9 @@ class GameEngine {
             const temp = this.grid[cell1.row][cell1.col];
             this.grid[cell1.row][cell1.col] = this.grid[cell2.row][cell2.col];
             this.grid[cell2.row][cell2.col] = temp;
+
+            // 检查是否需要自动洗牌
+            await this.checkAutoShuffle();
         }
 
         this.isAnimating = false;
@@ -265,8 +285,13 @@ class GameEngine {
             // 显示得分弹窗
             this.showScorePopup(finalScore, matches[0].row, matches[0].col);
 
-            // 消除匹配的方块
+            // 消除匹配的方块并更新目标
             matches.forEach(match => {
+                // 更新目标进度
+                if (this.objectives[match.type]) {
+                    this.objectives[match.type].current++;
+                }
+
                 this.grid[match.row][match.col] = BLOCK_TYPES.EMPTY;
                 this.createParticles(match.col * this.cellSize + this.cellSize / 2,
                                    match.row * this.cellSize + this.cellSize / 2);
@@ -362,12 +387,12 @@ class GameEngine {
 
     getRandomBlockType() {
         const normalTypes = [
-            BLOCK_TYPES.RED,
-            BLOCK_TYPES.BLUE,
-            BLOCK_TYPES.GREEN,
-            BLOCK_TYPES.YELLOW,
-            BLOCK_TYPES.PURPLE,
-            BLOCK_TYPES.ORANGE
+            BLOCK_TYPES.APPLE,
+            BLOCK_TYPES.ORANGE,
+            BLOCK_TYPES.BANANA,
+            BLOCK_TYPES.GRAPE,
+            BLOCK_TYPES.STRAWBERRY,
+            BLOCK_TYPES.WATERMELON
         ];
 
         return normalTypes[Math.floor(Math.random() * normalTypes.length)];
@@ -471,21 +496,63 @@ class GameEngine {
     drawBlock(row, col, blockType) {
         const x = col * this.cellSize;
         const y = row * this.cellSize;
-        const padding = 2;
+        const padding = 3;
+        const size = this.cellSize - padding * 2;
 
-        // 绘制方块背景
-        this.ctx.fillStyle = BLOCK_COLORS[blockType] || '#ccc';
-        this.ctx.fillRect(x + padding, y + padding,
-                         this.cellSize - padding * 2, this.cellSize - padding * 2);
+        // 绘制Q版圆形背景
+        const centerX = x + this.cellSize / 2;
+        const centerY = y + this.cellSize / 2;
+        const radius = size / 2;
 
-        // 绘制方块边框
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(x + padding, y + padding,
-                           this.cellSize - padding * 2, this.cellSize - padding * 2);
+        // 渐变背景
+        const gradient = this.ctx.createRadialGradient(
+            centerX - radius * 0.3, centerY - radius * 0.3, 0,
+            centerX, centerY, radius
+        );
 
-        // 绘制方块图案
-        this.drawBlockPattern(x, y, blockType);
+        const fruitColor = BLOCK_COLORS[blockType] || '#ccc';
+        gradient.addColorStop(0, this.lightenColor(fruitColor, 40));
+        gradient.addColorStop(1, fruitColor);
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 添加光泽效果
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX - radius * 0.3, centerY - radius * 0.3, radius * 0.4, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 绘制水果表情
+        this.drawFruitEmoji(centerX, centerY, blockType);
+    }
+
+    // 绘制水果表情
+    drawFruitEmoji(centerX, centerY, blockType) {
+        const fruitData = FRUIT_DATA[blockType];
+        if (!fruitData) return;
+
+        const fontSize = Math.max(16, this.cellSize * 0.5);
+        this.ctx.font = `${fontSize}px Apple Color Emoji, Segoe UI Emoji, sans-serif`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+
+        // 绘制水果表情
+        this.ctx.fillText(fruitData.emoji, centerX, centerY);
+    }
+
+    // 颜色处理工具方法
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
     }
 
     drawBlockPattern(x, y, blockType) {
@@ -670,18 +737,77 @@ class GameEngine {
         document.getElementById('game-score').textContent = this.score;
         document.getElementById('game-level').textContent = this.level;
         document.getElementById('moves-left').textContent = this.moves;
+        document.getElementById('time-left').textContent = this.timeLeft;
+
+        // 更新游戏目标进度
+        this.updateObjectivesUI();
+
+        // 时间警告
+        if (this.timeLeft <= 10) {
+            document.getElementById('time-left').style.color = '#ff4757';
+            document.getElementById('time-left').style.animation = 'blink 1s infinite';
+        } else {
+            document.getElementById('time-left').style.color = '#333';
+            document.getElementById('time-left').style.animation = 'none';
+        }
+    }
+
+    updateObjectivesUI() {
+        const objectiveList = document.getElementById('objective-list');
+        if (!objectiveList) return;
+
+        let html = '';
+        Object.entries(this.objectives).forEach(([fruitType, data]) => {
+            const fruitData = FRUIT_DATA[parseInt(fruitType)];
+            if (fruitData) {
+                const progress = data.current;
+                const target = data.target;
+                const completed = progress >= target;
+
+                html += `
+                    <div class="objective-item ${completed ? 'completed' : ''}">
+                        <span class="objective-icon">${fruitData.emoji}</span>
+                        <span class="objective-text">消除 ${target} 个${fruitData.name}</span>
+                        <span class="objective-progress">${Math.min(progress, target)}/${target}</span>
+                    </div>
+                `;
+            }
+        });
+
+        objectiveList.innerHTML = html;
     }
 
     checkGameEnd() {
+        // 检查时间是否用完
+        if (this.timeLeft <= 0) {
+            this.gameState = 'gameover';
+            this.onGameOver();
+            return;
+        }
+
+        // 检查步数是否用完
         if (this.moves <= 0) {
-            if (this.score >= this.targetScore) {
+            if (this.checkObjectivesCompleted()) {
                 this.gameState = 'completed';
                 this.onLevelComplete();
             } else {
                 this.gameState = 'gameover';
                 this.onGameOver();
             }
+            return;
         }
+
+        // 检查目标是否完成
+        if (this.checkObjectivesCompleted()) {
+            this.gameState = 'completed';
+            this.onLevelComplete();
+        }
+    }
+
+    checkObjectivesCompleted() {
+        return Object.values(this.objectives).every(objective =>
+            objective.current >= objective.target
+        );
     }
 
     async onLevelComplete() {
@@ -818,13 +944,20 @@ class GameEngine {
         // 重置游戏状态
         this.score = 0;
         this.moves = CONFIG.GAME.INITIAL_MOVES;
+        this.timeLeft = 60; // 重置时间
         this.combo = 0;
         this.selectedCell = null;
         this.particles = [];
         this.gameState = 'playing';
 
+        // 初始化游戏目标
+        this.initializeObjectives();
+
         // 初始化游戏网格
         this.initializeGrid();
+
+        // 开始计时器
+        this.startTimers();
 
         // 更新UI
         this.updateGameUI();
@@ -833,6 +966,97 @@ class GameEngine {
         this.gameLoop();
 
         return true;
+    }
+
+    initializeObjectives() {
+        // 根据关卡生成随机目标
+        const fruitTypes = [
+            BLOCK_TYPES.APPLE,
+            BLOCK_TYPES.ORANGE,
+            BLOCK_TYPES.BANANA,
+            BLOCK_TYPES.GRAPE,
+            BLOCK_TYPES.STRAWBERRY,
+            BLOCK_TYPES.WATERMELON
+        ];
+
+        this.objectives = {};
+
+        // 选择2-3个水果作为目标
+        const targetCount = 2 + Math.floor(Math.random() * 2); // 2或3个目标
+        const selectedFruits = [];
+
+        for (let i = 0; i < targetCount; i++) {
+            let fruitType;
+            do {
+                fruitType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+            } while (selectedFruits.includes(fruitType));
+
+            selectedFruits.push(fruitType);
+
+            // 目标数量根据关卡增加
+            const baseTarget = 10 + this.level * 2;
+            const targetAmount = baseTarget + Math.floor(Math.random() * 5);
+
+            this.objectives[fruitType] = {
+                target: targetAmount,
+                current: 0
+            };
+        }
+    }
+
+    startTimers() {
+        // 清除已有的计时器
+        this.stopTimers();
+
+        // 总游戏时间倒计时
+        this.gameTimer = setInterval(() => {
+            this.timeLeft--;
+            this.updateGameUI();
+
+            if (this.timeLeft <= 0) {
+                this.checkGameEnd();
+            }
+        }, 1000);
+
+        // 开始第一步的计时
+        this.startMoveTimer();
+    }
+
+    startMoveTimer() {
+        this.currentMoveStartTime = Date.now();
+
+        this.moveTimer = setTimeout(() => {
+            if (this.gameState === 'playing') {
+                // 超时扣分
+                this.score = Math.max(0, this.score - 50);
+                this.updateGameUI();
+
+                // 继续下一步
+                this.startMoveTimer();
+            }
+        }, this.maxTimePerMove * 1000);
+    }
+
+    resetMoveTimer() {
+        if (this.moveTimer) {
+            clearTimeout(this.moveTimer);
+        }
+
+        if (this.gameState === 'playing') {
+            this.startMoveTimer();
+        }
+    }
+
+    stopTimers() {
+        if (this.gameTimer) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+        }
+
+        if (this.moveTimer) {
+            clearTimeout(this.moveTimer);
+            this.moveTimer = null;
+        }
     }
 
     gameLoop() {
@@ -845,6 +1069,7 @@ class GameEngine {
     pause() {
         if (this.gameState === 'playing') {
             this.gameState = 'paused';
+            this.stopTimers(); // 停止所有计时器
             this.showPauseMenu();
         }
     }
@@ -852,6 +1077,7 @@ class GameEngine {
     resume() {
         if (this.gameState === 'paused') {
             this.gameState = 'playing';
+            this.startTimers(); // 恢复计时器
             this.clearModals();
             this.gameLoop();
         }
@@ -989,6 +1215,149 @@ class GameEngine {
         }
 
         return null;
+    }
+
+    async checkAutoShuffle() {
+        // 检查是否还有可能的移动
+        const possibleMoves = this.findAllPossibleMoves();
+
+        if (possibleMoves.length === 0) {
+            // 没有可能的移动，自动洗牌
+            await this.autoShuffle();
+        }
+    }
+
+    findAllPossibleMoves() {
+        const possibleMoves = [];
+
+        // 检查所有可能的水平交换
+        for (let row = 0; row < this.gridSize; row++) {
+            for (let col = 0; col < this.gridSize - 1; col++) {
+                if (this.canMakeValidMove(row, col, row, col + 1)) {
+                    possibleMoves.push({
+                        from: { row, col },
+                        to: { row, col: col + 1 }
+                    });
+                }
+            }
+        }
+
+        // 检查所有可能的垂直交换
+        for (let row = 0; row < this.gridSize - 1; row++) {
+            for (let col = 0; col < this.gridSize; col++) {
+                if (this.canMakeValidMove(row, col, row + 1, col)) {
+                    possibleMoves.push({
+                        from: { row, col },
+                        to: { row: row + 1, col }
+                    });
+                }
+            }
+        }
+
+        return possibleMoves;
+    }
+
+    canMakeValidMove(row1, col1, row2, col2) {
+        // 临时交换
+        const temp = this.grid[row1][col1];
+        this.grid[row1][col1] = this.grid[row2][col2];
+        this.grid[row2][col2] = temp;
+
+        // 检查是否有匹配
+        const hasMatch = this.findMatches().length > 0;
+
+        // 恢复交换
+        this.grid[row2][col2] = this.grid[row1][col1];
+        this.grid[row1][col1] = temp;
+
+        return hasMatch;
+    }
+
+    async autoShuffle() {
+        console.log('自动洗牌...');
+
+        // 显示洗牌提示
+        this.showShuffleNotification();
+
+        // 等待一秒让用户看到提示
+        await this.sleep(1000);
+
+        // 执行洗牌
+        this.shuffleGrid();
+
+        // 确保洗牌后有可能的移动
+        let attempts = 0;
+        while (this.findAllPossibleMoves().length === 0 && attempts < 10) {
+            this.shuffleGrid();
+            attempts++;
+        }
+
+        // 重新渲染
+        this.render();
+
+        // 播放洗牌音效
+        this.playSound('shuffle');
+    }
+
+    shuffleGrid() {
+        // 获取所有非空方块
+        const blocks = [];
+        for (let row = 0; row < this.gridSize; row++) {
+            for (let col = 0; col < this.gridSize; col++) {
+                if (this.grid[row][col] !== BLOCK_TYPES.EMPTY) {
+                    blocks.push(this.grid[row][col]);
+                }
+            }
+        }
+
+        // Fisher-Yates洗牌算法
+        for (let i = blocks.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [blocks[i], blocks[j]] = [blocks[j], blocks[i]];
+        }
+
+        // 将洗牌后的方块重新放回网格
+        let blockIndex = 0;
+        for (let row = 0; row < this.gridSize; row++) {
+            for (let col = 0; col < this.gridSize; col++) {
+                if (this.grid[row][col] !== BLOCK_TYPES.EMPTY) {
+                    this.grid[row][col] = blocks[blockIndex++];
+                }
+            }
+        }
+
+        // 移除初始匹配
+        this.removeInitialMatches();
+    }
+
+    showShuffleNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'shuffle-notification';
+        notification.textContent = '🔄 自动洗牌中...';
+
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: fadeInOut 1s ease-in-out;
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 1000);
     }
 }
 

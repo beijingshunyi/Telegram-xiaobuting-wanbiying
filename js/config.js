@@ -13,19 +13,43 @@ const CONFIG = {
         ENERGY_RECOVERY_TIME: 5 * 60 * 1000 // 5分钟恢复1点体力
     },
 
-    // 万花币配置
+    // 万花币配置（平衡优化版）
     CURRENCY: {
         NAME: "万花币",
         SYMBOL: "🪙",
         RATE_TO_RMB: 1000, // 1000万花币 = 10人民币
-        DAILY_BONUS: 100,
-        SIGN_IN_BONUS: [50, 60, 70, 80, 90, 100, 150], // 连续签到奖励
+
+        // 每日基础奖励（资深用户月最多3000币，普通用户月最多2000币）
+        DAILY_BONUS: {
+            BASE: 50,           // 基础每日奖励50币
+            VIP_MULTIPLIER: 1.5 // 资深用户倍数
+        },
+
+        // 连续签到奖励（平衡调整）
+        SIGN_IN_BONUS: [20, 25, 30, 35, 40, 50, 80], // 7天总共280币
+
+        // 游戏内消除奖励（大幅降低）
         MATCH_REWARDS: {
-            3: 1,   // 3连消奖励1万花币
-            4: 3,   // 4连消奖励3万花币
-            5: 5,   // 5连消奖励5万花币
-            L: 8,   // L型消除奖励8万花币
-            T: 10   // T型消除奖励10万花币
+            3: 0.5, // 3连消奖励0.5万花币
+            4: 1,   // 4连消奖励1万花币
+            5: 2,   // 5连消奖励2万花币
+            L: 3,   // L型消除奖励3万花币
+            T: 5    // T型消除奖励5万花币
+        },
+
+        // 月度上限控制
+        MONTHLY_LIMITS: {
+            REGULAR_USER: 2000,    // 普通用户月上限2000币
+            VIP_USER: 3000,        // 资深用户月上限3000币
+            VIP_THRESHOLD: 30      // 连续30天登录成为资深用户
+        },
+
+        // 获取途径权重分配
+        EARNING_SOURCES: {
+            DAILY_SIGNIN: 0.4,     // 40%来自签到
+            GAME_REWARDS: 0.3,     // 30%来自游戏奖励
+            ACHIEVEMENTS: 0.15,    // 15%来自成就
+            SOCIAL: 0.15          // 15%来自社交活动
         }
     },
 
@@ -74,67 +98,74 @@ const CONFIG = {
         PROCESSING_TIME: "1-3个工作日"
     },
 
-    // 成就系统
+    // 成就系统（平衡优化版）
     ACHIEVEMENTS: {
         FIRST_GAME: {
             id: "first_game",
             name: "初出茅庐",
             description: "完成第一局游戏",
-            reward: 50,
+            reward: 30,
             icon: "🎮"
         },
         SCORE_1000: {
             id: "score_1000",
             name: "得分达人",
             description: "单局得分超过1000",
-            reward: 100,
+            reward: 50,
             icon: "🎯"
         },
         LEVEL_10: {
             id: "level_10",
             name: "关卡挑战者",
             description: "通过第10关",
-            reward: 200,
+            reward: 80,
             icon: "🏆"
         },
         COMBO_5: {
             id: "combo_5",
             name: "连击高手",
             description: "达成5连击",
-            reward: 150,
+            reward: 60,
             icon: "⚡"
         },
         DAILY_7: {
             id: "daily_7",
             name: "坚持不懈",
             description: "连续签到7天",
-            reward: 300,
+            reward: 120,
             icon: "📅"
         },
         FRIEND_5: {
             id: "friend_5",
             name: "人脉广阔",
             description: "邀请5位好友",
-            reward: 500,
+            reward: 200,
             icon: "👥"
         },
-        COIN_10000: {
-            id: "coin_10000",
-            name: "万花币大亨",
-            description: "累计获得10000万花币",
-            reward: 1000,
+        COIN_5000: {
+            id: "coin_5000",
+            name: "万花币收藏家",
+            description: "累计获得5000万花币",
+            reward: 150,
             icon: "💰"
+        },
+        MONTHLY_LOGIN: {
+            id: "monthly_login",
+            name: "月度坚持者",
+            description: "连续登录30天",
+            reward: 300,
+            icon: "🌟"
         }
     },
 
-    // 排行榜奖励
+    // 排行榜奖励（平衡调整版）
     LEADERBOARD: {
         MONTHLY_REWARDS: {
-            1: 5000,  // 第一名奖励5000万花币
-            2: 3000,  // 第二名奖励3000万花币
-            3: 2000,  // 第三名奖励2000万花币
-            4: 1000,  // 第四名奖励1000万花币
-            5: 500    // 第五名奖励500万花币
+            1: 800,   // 第一名奖励800万花币
+            2: 500,   // 第二名奖励500万花币
+            3: 300,   // 第三名奖励300万花币
+            4: 200,   // 第四名奖励200万花币
+            5: 100    // 第五名奖励100万花币
         },
         RESET_DAY: 1 // 每月1号重置排行榜
     },

@@ -61,33 +61,38 @@ class GameApp {
 
     preloadResources() {
         return new Promise((resolve) => {
-            const images = [
-                'images/default-avatar.png',
-                'images/coin-icon.png',
-                'images/hammer.png',
-                'images/shuffle.png',
-                'images/steps.png',
-                'images/hint.png'
+            // 现在我们使用emoji替代了图片，所以不需要预加载图片
+            // 但我们可以预加载音频文件
+            const audioFiles = [
+                'audio/match.mp3',
+                'audio/coin.mp3',
+                'audio/button.mp3'
             ];
 
             let loadedCount = 0;
-            const totalCount = images.length;
+            const totalCount = audioFiles.length;
 
-            images.forEach(src => {
-                const img = new Image();
-                img.onload = img.onerror = () => {
+            if (totalCount === 0) {
+                resolve();
+                return;
+            }
+
+            audioFiles.forEach(src => {
+                const audio = new Audio();
+                audio.oncanplaythrough = audio.onerror = () => {
                     loadedCount++;
                     if (loadedCount === totalCount) {
                         resolve();
                     }
                 };
-                img.src = src;
+                audio.src = src;
+                audio.load();
             });
 
-            // 如果没有图片，直接resolve
-            if (totalCount === 0) {
+            // 设置超时，避免音频加载阻塞游戏启动
+            setTimeout(() => {
                 resolve();
-            }
+            }, 3000);
         });
     }
 
@@ -138,6 +143,10 @@ class GameApp {
         });
 
         // 功能按钮
+        document.getElementById('daily-checkin')?.addEventListener('click', () => {
+            this.showDailyCheckin();
+        });
+
         document.getElementById('shop-btn')?.addEventListener('click', () => {
             this.showShop();
         });
@@ -247,8 +256,25 @@ class GameApp {
 
     async startGame() {
         try {
+            // 检查每日游戏次数
+            if (window.dailyAttemptsManager && !window.dailyAttemptsManager.hasAttempts()) {
+                window.dailyAttemptsManager.showInsufficientAttemptsModal();
+                return;
+            }
+
             const success = await window.gameEngine?.startGame();
             if (success) {
+                // 消耗一次游戏次数
+                if (window.dailyAttemptsManager) {
+                    await window.dailyAttemptsManager.consumeAttempt();
+                }
+
+                // 初始化游戏目标
+                if (window.gameObjectives) {
+                    const level = window.gameEngine.level || 1;
+                    window.gameObjectives.initLevel(level);
+                }
+
                 this.showScreen('game-screen');
             } else {
                 console.error('游戏启动失败');
@@ -354,6 +380,17 @@ class GameApp {
 
         if (success) {
             window.telegramApp.hapticFeedback('light');
+        }
+    }
+
+    showDailyCheckin() {
+        if (window.checkinSystem) {
+            window.checkinSystem.showCheckinModal();
+        } else {
+            console.warn('签到系统未初始化');
+            if (window.uiManager) {
+                window.uiManager.showNotification('签到功能正在加载中...', 'info');
+            }
         }
     }
 

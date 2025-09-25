@@ -114,7 +114,7 @@ class CheckinSystem {
                 <div class="checkin-reward">
                     <div class="reward-preview">
                         <div class="reward-coin">
-                            <img src="images/coin-icon.png" alt="万花币" class="coin-icon">
+                            <span class="coin-icon">🪙</span>
                             <span class="reward-amount">+${nextReward}</span>
                         </div>
                         <p>今日签到奖励</p>
@@ -200,7 +200,7 @@ class CheckinSystem {
                         ${isCompleted ? '<span class="check-mark">✓</span>' : ''}
                     </div>
                     <div class="day-reward">
-                        <img src="images/coin-icon.png" alt="万花币" class="mini-coin">
+                        <span class="mini-coin">🪙</span>
                         <span>${reward}</span>
                     </div>
                     ${day === 7 ? '<div class="bonus-indicator">🎁 特殊奖励</div>' : ''}
@@ -310,7 +310,7 @@ class CheckinSystem {
 
                 <div class="success-rewards">
                     <div class="reward-item">
-                        <img src="images/coin-icon.png" alt="万花币" class="coin-icon">
+                        <span class="coin-icon">🪙</span>
                         <span class="reward-text">+${reward} ${CONFIG.CURRENCY.NAME}</span>
                     </div>
 

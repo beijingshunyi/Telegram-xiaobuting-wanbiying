@@ -8,6 +8,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6402806742664594" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/cute-theme.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -34,7 +35,7 @@
         <div class="header">
             <div class="user-info">
                 <div class="user-avatar">
-                    <img id="user-avatar" src="images/default-avatar.png" alt="头像">
+                    <div id="user-avatar" class="avatar-placeholder">🐱</div>
                 </div>
                 <div class="user-details">
                     <div class="username" id="username">加载中...</div>
@@ -43,12 +44,16 @@
             </div>
             <div class="currency-info">
                 <div class="coin-count">
-                    <img src="images/coin-icon.png" alt="万花币" class="coin-icon">
+                    <span class="coin-icon">🪙</span>
                     <span id="coin-count">0</span>
                 </div>
                 <div class="energy-bar">
                     <div class="energy-fill" id="energy-fill"></div>
                     <span class="energy-text">体力 <span id="energy-count">100</span>/100</span>
+                </div>
+                <div class="attempts-display">
+                    <span>游戏次数 <span id="daily-attempts">6</span></span>
+                    <span id="attempts-warning" class="btn-badge">!</span>
                 </div>
             </div>
         </div>
@@ -123,11 +128,36 @@
         <div class="game-header">
             <button id="pause-btn" class="icon-btn">⏸️</button>
             <div class="game-info">
-                <div class="score">得分: <span id="game-score">0</span></div>
-                <div class="level">关卡: <span id="game-level">1</span></div>
-                <div class="moves">步数: <span id="moves-left">30</span></div>
+                <div class="info-item">
+                    <div class="info-label">得分</div>
+                    <div class="info-value" id="game-score">0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">关卡</div>
+                    <div class="info-value" id="game-level">1</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">步数</div>
+                    <div class="info-value" id="moves-left">30</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">时间</div>
+                    <div class="info-value" id="time-left">60</div>
+                </div>
             </div>
             <button id="menu-btn" class="icon-btn">📋</button>
+        </div>
+
+        <!-- 游戏目标显示 -->
+        <div class="game-objectives">
+            <div class="objective-title">🎯 本关目标</div>
+            <div class="objective-list" id="objective-list">
+                <div class="objective-item">
+                    <span class="objective-icon">🍎</span>
+                    <span class="objective-text">消除 <span class="target-count">20</span> 个苹果</span>
+                    <span class="objective-progress">0/20</span>
+                </div>
+            </div>
         </div>
 
         <div class="game-canvas-container">
@@ -137,22 +167,26 @@
             </div>
         </div>
 
-        <div class="game-tools">
-            <button class="tool-btn" id="hammer-tool">
-                <img src="images/hammer.png" alt="锤子">
-                <span class="tool-count" id="hammer-count">0</span>
+        <div class="tools-container">
+            <button class="tool-btn" id="hammer-tool" title="消除单个方块">
+                <div class="tool-icon">🔨</div>
+                <div class="tool-name">小锤子</div>
+                <span class="tool-count" id="hammer-count">3</span>
             </button>
-            <button class="tool-btn" id="shuffle-tool">
-                <img src="images/shuffle.png" alt="洗牌">
-                <span class="tool-count" id="shuffle-count">0</span>
+            <button class="tool-btn" id="shuffle-tool" title="重新排列所有方块">
+                <div class="tool-icon">🔄</div>
+                <div class="tool-name">洗洗牌</div>
+                <span class="tool-count" id="shuffle-count">2</span>
             </button>
-            <button class="tool-btn" id="steps-tool">
-                <img src="images/steps.png" alt="步数">
-                <span class="tool-count" id="steps-count">0</span>
+            <button class="tool-btn" id="steps-tool" title="增加5步额外步数">
+                <div class="tool-icon">👟</div>
+                <div class="tool-name">加步数</div>
+                <span class="tool-count" id="steps-count">2</span>
             </button>
-            <button class="tool-btn" id="hint-tool">
-                <img src="images/hint.png" alt="提示">
-                <span class="tool-count" id="hint-count">0</span>
+            <button class="tool-btn" id="hint-tool" title="显示可消除的方块">
+                <div class="tool-icon">💡</div>
+                <div class="tool-name">小提示</div>
+                <span class="tool-count" id="hint-count">5</span>
             </button>
         </div>
 
@@ -192,6 +226,8 @@
     <script src="js/withdraw.js"></script>
     <script src="js/social.js"></script>
     <script src="js/bot.js"></script>
+    <script src="js/game-objectives.js"></script>
+    <script src="js/daily-attempts.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
