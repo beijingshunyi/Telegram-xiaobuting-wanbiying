@@ -1,6 +1,14 @@
 {
   "version": 2,
   "name": "xiaobuting-wanbiying",
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

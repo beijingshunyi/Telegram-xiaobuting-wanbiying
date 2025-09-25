@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
-    "build": "echo 'Building frontend...' && npm run minify",
+    "build": "echo 'No build step needed for Vercel deployment'",
     "minify": "terser js/*.js -o js/bundle.min.js",
     "test": "echo 'Running tests...'",
     "deploy": "echo 'Deploying to production...'"
@@ -28,7 +28,6 @@
     "@supabase/supabase-js": "^2.38.0",
     "node-telegram-bot-api": "^0.61.0",
     "axios": "^1.4.0",
-    "crypto": "^1.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1"
   },
