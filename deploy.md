@@ -2,23 +2,26 @@
 
 本文档详细介绍了如何将消不停·万币赢游戏部署到各种平台。
 
-## 🚀 部署方案选择
+## 🚀 部署方案选择（更新）
 
-### 免费方案（适合测试）
-- **前端**：GitHub Pages / Netlify
-- **后端**：Railway / Render 免费额度
-- **数据库**：SQLite（本地文件）
+### 💰 免费方案（推荐，完全免费）
+- **前端+后端**：Vercel（免费额度充足）
+- **数据库**：Supabase PostgreSQL（免费额度500MB）
+- **存储**：Vercel静态资源
+- **域名**：Vercel免费子域名
 
-### 推荐方案（适合生产）
-- **前端**：Vercel / Netlify Pro
-- **后端**：Railway / Render
-- **数据库**：PlanetScale MySQL / Supabase PostgreSQL
+### 🔄 替代免费方案
+- **前端+后端**：Netlify Functions
+- **数据库**：PlanetScale MySQL（免费5GB）
+- **存储**：Netlify静态资源
 
-### 企业方案（适合大规模）
+### 🏢 企业方案（适合大规模）
 - **前端**：CDN + 云存储
 - **后端**：VPS / 云服务器集群
 - **数据库**：云数据库集群
 - **缓存**：Redis集群
+
+> ⚠️ **Railway限制说明**：由于Railway免费账户限制，我们改用Vercel + Supabase的完全免费方案
 
 ## 📋 部署前准备
 
@@ -70,48 +73,65 @@ Telegram要求Web App必须使用HTTPS，建议：
 - 使用免费SSL证书（Let's Encrypt）
 - 或使用Cloudflare免费SSL
 
-## 🌐 Railway部署（推荐）
+## 🌐 Vercel + Supabase部署（推荐免费方案）
 
 ### 优势
-- 免费额度充足
-- 自动CI/CD
-- 内置数据库
-- 简单易用
+- 完全免费（Vercel + Supabase免费额度充足）
+- 自动CI/CD部署
+- 全球CDN加速
+- Serverless架构
+- PostgreSQL数据库
 
-### 部署步骤
+### 第一步：创建Supabase数据库
+
+1. **注册Supabase**
+- 访问 [Supabase](https://supabase.com)
+- 使用GitHub登录
+
+2. **创建新项目**
+- 点击 "New Project"
+- 项目名称：xiaobuting-wanbiying
+- 数据库密码：设置强密码
+- 区域：选择Singapore（亚洲用户）
+
+3. **获取数据库连接信息**
+```bash
+# 在Project Settings -> Database 中找到
+DATABASE_URL=postgresql://postgres:[password]@[host]:5432/postgres
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 第二步：部署到Vercel
 
 1. **Fork代码仓库**
 ```bash
-# Fork到你的GitHub账号
-https://github.com/your-username/Telegram-xiaobuting-wanbiying
+# 已完成，使用现有仓库
+https://github.com/beijingshunyi/Telegram-xiaobuting-wanbiying
 ```
 
-2. **连接Railway**
-- 访问 [Railway](https://railway.app)
+2. **连接Vercel**
+- 访问 [Vercel](https://vercel.com)
 - 使用GitHub登录
 - 点击 "New Project"
-- 选择 "Deploy from GitHub repo"
-- 选择你的仓库
+- 导入GitHub仓库：beijingshunyi/Telegram-xiaobuting-wanbiying
 
 3. **配置环境变量**
 ```bash
 NODE_ENV=production
-PORT=3000
 BOT_TOKEN=your_telegram_bot_token
-GAME_URL=https://your-app.up.railway.app
+GAME_URL=https://your-app.vercel.app
 ENCRYPTION_KEY=your-32-character-encryption-key
 ADMOB_BANNER_ID=ca-app-pub-6402806742664594/3631141010
 ADMOB_REWARD_ID=ca-app-pub-6402806742664594/4856592778
+DATABASE_URL=your_supabase_database_url
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. **自定义域名（可选）**
-- 在Railway控制台点击"Settings"
-- 点击"Domains"
-- 添加自定义域名
-
-5. **部署完成**
-- Railway会自动构建和部署
-- 访问分配的URL测试游戏
+4. **部署完成**
+- Vercel自动构建和部署
+- 获得免费域名：https://your-app.vercel.app
 
 ## ☁️ Vercel + PlanetScale部署
 

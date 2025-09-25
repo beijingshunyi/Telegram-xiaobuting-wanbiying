@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
 const TelegramBot = require('node-telegram-bot-api');
+require('dotenv').config();
+
+// 导入数据库管理器
+const dbManager = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,82 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
-// 数据库初始化
-const db = new sqlite3.Database('./game_data.db');
-
-// 初始化数据库表
-db.serialize(() => {
-    // 用户表
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        telegram_id TEXT UNIQUE NOT NULL,
-        username TEXT,
-        first_name TEXT,
-        photo_url TEXT,
-        coins INTEGER DEFAULT 0,
-        energy INTEGER DEFAULT 100,
-        level INTEGER DEFAULT 1,
-        total_score INTEGER DEFAULT 0,
-        checkin_streak INTEGER DEFAULT 0,
-        last_checkin DATE,
-        invite_code TEXT UNIQUE,
-        invited_by TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    // 游戏记录表
-    db.run(`CREATE TABLE IF NOT EXISTS game_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        level INTEGER,
-        score INTEGER,
-        moves INTEGER,
-        coins_earned INTEGER,
-        completed BOOLEAN,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )`);
-
-    // 签到记录表
-    db.run(`CREATE TABLE IF NOT EXISTS checkin_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        date DATE,
-        reward INTEGER,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )`);
-
-    // 提现记录表
-    db.run(`CREATE TABLE IF NOT EXISTS withdrawal_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        type TEXT,
-        amount INTEGER,
-        fee INTEGER,
-        final_amount DECIMAL,
-        account TEXT,
-        real_name TEXT,
-        status TEXT DEFAULT 'pending',
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )`);
-
-    // 邀请关系表
-    db.run(`CREATE TABLE IF NOT EXISTS invite_relations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        inviter_id INTEGER,
-        invitee_id INTEGER,
-        invite_code TEXT,
-        reward_claimed BOOLEAN DEFAULT FALSE,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(inviter_id) REFERENCES users(id),
-        FOREIGN KEY(invitee_id) REFERENCES users(id)
-    )`);
-
-    console.log('Database tables initialized');
-});
+// 数据库已通过dbManager自动初始化
 
 // Telegram Bot (可选)
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -102,7 +30,7 @@ if (BOT_TOKEN) {
         const text = msg.text;
 
         if (text === '/start') {
-            bot.sendMessage(chatId, `🎮 欢迎来到${CONFIG?.COPYRIGHT?.GAME_NAME || '消不停·万币赢'}！\n\n🎯 每天玩游戏赚万花币\n💰 万花币可提现到支付宝和USDT\n🎁 邀请好友获得额外奖励\n\n点击下方按钮开始游戏：`, {
+            bot.sendMessage(chatId, `🎮 欢迎来到消不停·万币赢！\n\n🎯 每天玩游戏赚万花币\n💰 万花币可提现到支付宝和USDT\n🎁 邀请好友获得额外奖励\n\n点击下方按钮开始游戏：`, {
                 reply_markup: {
                     inline_keyboard: [[
                         { text: '🎮 开始游戏', web_app: { url: process.env.GAME_URL || 'https://your-domain.com' } }
@@ -116,56 +44,67 @@ if (BOT_TOKEN) {
 // API路由
 
 // 用户相关API
-app.get('/api/user/:telegramId', (req, res) => {
+app.get('/api/user/:telegramId', async (req, res) => {
     const { telegramId } = req.params;
 
-    db.get('SELECT * FROM users WHERE telegram_id = ?', [telegramId], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
+    try {
+        const paramIndex = dbManager.getType() === 'postgresql' ? '$1' : '?';
+        const user = await dbManager.get(`SELECT * FROM users WHERE telegram_id = ${paramIndex}`, [telegramId]);
 
-        if (!row) {
+        if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
         res.json({
             success: true,
-            user: row
+            user: user
         });
-    });
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
 });
 
-app.post('/api/user/create', (req, res) => {
+app.post('/api/user/create', async (req, res) => {
     const { telegramId, username, firstName, photoUrl } = req.body;
     const inviteCode = generateInviteCode();
 
-    db.run(`INSERT INTO users (telegram_id, username, first_name, photo_url, invite_code)
-            VALUES (?, ?, ?, ?, ?)`,
-           [telegramId, username, firstName, photoUrl, inviteCode],
-           function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to create user' });
-        }
+    try {
+        const isPostgres = dbManager.getType() === 'postgresql';
+        const params = isPostgres ?
+            '$1, $2, $3, $4, $5' : '?, ?, ?, ?, ?';
+
+        const userId = await dbManager.insert(
+            `INSERT INTO users (telegram_id, username, first_name, photo_url, invite_code)
+             VALUES (${params})`,
+            [telegramId, username, firstName, photoUrl, inviteCode]
+        );
 
         res.json({
             success: true,
-            userId: this.lastID,
+            userId,
             inviteCode
         });
-    });
+    } catch (error) {
+        console.error('Failed to create user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
 });
 
-app.put('/api/user/:telegramId', (req, res) => {
+app.put('/api/user/:telegramId', async (req, res) => {
     const { telegramId } = req.params;
     const updates = req.body;
 
     const fields = [];
     const values = [];
+    let paramIndex = 1;
 
     Object.keys(updates).forEach(key => {
         if (key !== 'telegramId') {
-            fields.push(`${key} = ?`);
+            const param = dbManager.getType() === 'postgresql' ? `$${paramIndex}` : '?';
+            fields.push(`${key} = ${param}`);
             values.push(updates[key]);
+            paramIndex++;
         }
     });
 
@@ -173,49 +112,74 @@ app.put('/api/user/:telegramId', (req, res) => {
         return res.status(400).json({ error: 'No valid fields to update' });
     }
 
+    const finalParam = dbManager.getType() === 'postgresql' ? `$${paramIndex}` : '?';
     values.push(telegramId);
-    const sql = `UPDATE users SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE telegram_id = ?`;
 
-    db.run(sql, values, function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to update user' });
-        }
+    const sql = `UPDATE users SET ${fields.join(', ')}, updated_at = ${
+        dbManager.getType() === 'postgresql' ? 'CURRENT_TIMESTAMP' : "datetime('now')"
+    } WHERE telegram_id = ${finalParam}`;
 
+    try {
+        await dbManager.run(sql, values);
         res.json({ success: true });
-    });
+    } catch (error) {
+        console.error('Failed to update user:', error);
+        res.status(500).json({ error: 'Failed to update user' });
+    }
 });
 
 // 游戏记录API
-app.post('/api/game/record', (req, res) => {
+app.post('/api/game/record', async (req, res) => {
     const { userId, level, score, moves, coinsEarned, completed } = req.body;
 
-    db.run(`INSERT INTO game_records (user_id, level, score, moves, coins_earned, completed)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-           [userId, level, score, moves, coinsEarned, completed],
-           function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to save game record' });
-        }
+    try {
+        const isPostgres = dbManager.getType() === 'postgresql';
+        const params = isPostgres ?
+            '$1, $2, $3, $4, $5, $6' : '?, ?, ?, ?, ?, ?';
 
-        res.json({ success: true, recordId: this.lastID });
-    });
+        const recordId = await dbManager.insert(
+            `INSERT INTO game_records (user_id, level, score, moves, coins_earned, completed)
+             VALUES (${params})`,
+            [userId, level, score, moves, coinsEarned, completed]
+        );
+
+        res.json({ success: true, recordId });
+    } catch (error) {
+        console.error('Failed to save game record:', error);
+        res.status(500).json({ error: 'Failed to save game record' });
+    }
 });
 
 // 排行榜API
-app.get('/api/leaderboard/:type', (req, res) => {
-    const { type } = req.params; // monthly, weekly, daily
+app.get('/api/leaderboard/:type', async (req, res) => {
+    const { type } = req.params;
     let dateFilter = '';
+    let dateFunction = '';
 
-    switch (type) {
-        case 'monthly':
-            dateFilter = "AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')";
-            break;
-        case 'weekly':
-            dateFilter = "AND timestamp >= date('now', 'weekday 0', '-7 days')";
-            break;
-        case 'daily':
-            dateFilter = "AND date(timestamp) = date('now')";
-            break;
+    if (dbManager.getType() === 'postgresql') {
+        switch (type) {
+            case 'monthly':
+                dateFilter = "AND DATE_TRUNC('month', timestamp) = DATE_TRUNC('month', CURRENT_DATE)";
+                break;
+            case 'weekly':
+                dateFilter = "AND timestamp >= DATE_TRUNC('week', CURRENT_DATE)";
+                break;
+            case 'daily':
+                dateFilter = "AND DATE(timestamp) = CURRENT_DATE";
+                break;
+        }
+    } else {
+        switch (type) {
+            case 'monthly':
+                dateFilter = "AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')";
+                break;
+            case 'weekly':
+                dateFilter = "AND timestamp >= date('now', 'weekday 0', '-7 days')";
+                break;
+            case 'daily':
+                dateFilter = "AND date(timestamp) = date('now')";
+                break;
+        }
     }
 
     const sql = `
@@ -223,80 +187,86 @@ app.get('/api/leaderboard/:type', (req, res) => {
         FROM users u
         JOIN game_records g ON u.id = g.user_id
         WHERE 1=1 ${dateFilter}
-        GROUP BY u.id
+        GROUP BY u.id, u.username, u.first_name, u.photo_url
         ORDER BY total_score DESC
         LIMIT 50
     `;
 
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
+    try {
+        const leaderboard = await dbManager.query(sql);
         res.json({
             success: true,
-            leaderboard: rows
+            leaderboard
         });
-    });
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
 });
 
 // 提现API
-app.post('/api/withdraw', (req, res) => {
+app.post('/api/withdraw', async (req, res) => {
     const { userId, type, amount, account, realName } = req.body;
 
-    // 计算手续费
     const fee = Math.floor(amount * 0.03);
     const finalAmount = amount - fee;
 
-    // 加密敏感信息
     const encryptedAccount = encrypt(account);
     const encryptedRealName = encrypt(realName);
 
-    db.run(`INSERT INTO withdrawal_records (user_id, type, amount, fee, final_amount, account, real_name, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-           [userId, type, amount, fee, finalAmount, encryptedAccount, encryptedRealName],
-           function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to process withdrawal' });
-        }
+    try {
+        const isPostgres = dbManager.getType() === 'postgresql';
+        const params = isPostgres ?
+            '$1, $2, $3, $4, $5, $6, $7' : '?, ?, ?, ?, ?, ?, ?';
+
+        const withdrawalId = await dbManager.insert(
+            `INSERT INTO withdrawal_records (user_id, type, amount, fee, final_amount, account, real_name)
+             VALUES (${params})`,
+            [userId, type, amount, fee, finalAmount, encryptedAccount, encryptedRealName]
+        );
 
         res.json({
             success: true,
-            withdrawalId: this.lastID,
+            withdrawalId,
             fee,
             finalAmount
         });
-    });
+    } catch (error) {
+        console.error('Failed to process withdrawal:', error);
+        res.status(500).json({ error: 'Failed to process withdrawal' });
+    }
 });
 
 // 邀请处理API
-app.post('/api/invite/process', (req, res) => {
+app.post('/api/invite/process', async (req, res) => {
     const { inviteCode, newUserId } = req.body;
 
-    // 查找邀请者
-    db.get('SELECT id FROM users WHERE invite_code = ?', [inviteCode], (err, inviter) => {
-        if (err || !inviter) {
+    try {
+        const paramIndex = dbManager.getType() === 'postgresql' ? '$1' : '?';
+        const inviter = await dbManager.get(`SELECT id FROM users WHERE invite_code = ${paramIndex}`, [inviteCode]);
+
+        if (!inviter) {
             return res.status(400).json({ error: 'Invalid invite code' });
         }
 
-        // 创建邀请关系
-        db.run(`INSERT INTO invite_relations (inviter_id, invitee_id, invite_code)
-                VALUES (?, ?, ?)`,
-               [inviter.id, newUserId, inviteCode],
-               function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to process invite' });
-            }
+        const isPostgres = dbManager.getType() === 'postgresql';
+        const params = isPostgres ? '$1, $2, $3' : '?, ?, ?';
 
-            // 给邀请者奖励（好友完成10关后）
-            res.json({ success: true });
-        });
-    });
+        await dbManager.insert(
+            `INSERT INTO invite_relations (inviter_id, invitee_id, invite_code)
+             VALUES (${params})`,
+            [inviter.id, newUserId, inviteCode]
+        );
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to process invite:', error);
+        res.status(500).json({ error: 'Failed to process invite' });
+    }
 });
 
 // 广告API
 app.get('/api/ads/manual', (req, res) => {
-    // 返回手动广告配置
     const manualAds = [
         {
             id: 'sponsor_1',
@@ -316,48 +286,45 @@ app.get('/api/ads/manual', (req, res) => {
 
 app.post('/api/ads/click', (req, res) => {
     const { adId, userId, timestamp } = req.body;
-
-    // 记录广告点击（简化实现）
     console.log(`Ad clicked: ${adId} by user ${userId} at ${new Date(timestamp)}`);
-
     res.json({ success: true });
 });
 
 // 用户分享API
-app.post('/api/user/share', (req, res) => {
+app.post('/api/user/share', async (req, res) => {
     const { userId, timestamp } = req.body;
 
-    // 记录分享事件并给予奖励
-    db.get('SELECT coins FROM users WHERE id = ?', [userId], (err, user) => {
-        if (err || !user) {
+    try {
+        const paramIndex = dbManager.getType() === 'postgresql' ? '$1' : '?';
+        const user = await dbManager.get(`SELECT coins FROM users WHERE id = ${paramIndex}`, [userId]);
+
+        if (!user) {
             return res.status(400).json({ error: 'User not found' });
         }
 
-        // 给予分享奖励（每日限制在前端控制）
         const shareReward = 5;
         const newCoins = user.coins + shareReward;
 
-        db.run('UPDATE users SET coins = ? WHERE id = ?', [newCoins, userId], (updateErr) => {
-            if (updateErr) {
-                return res.status(500).json({ error: 'Failed to update coins' });
-            }
+        const updateParam1 = dbManager.getType() === 'postgresql' ? '$1' : '?';
+        const updateParam2 = dbManager.getType() === 'postgresql' ? '$2' : '?';
 
-            res.json({
-                success: true,
-                reward: shareReward,
-                newBalance: newCoins
-            });
+        await dbManager.run(`UPDATE users SET coins = ${updateParam1} WHERE id = ${updateParam2}`, [newCoins, userId]);
+
+        res.json({
+            success: true,
+            reward: shareReward,
+            newBalance: newCoins
         });
-    });
+    } catch (error) {
+        console.error('Failed to process share:', error);
+        res.status(500).json({ error: 'Failed to process share' });
+    }
 });
 
 // USDT汇率API
 app.get('/api/exchange-rate/usdt', async (req, res) => {
     try {
-        // 这里应该调用真实的汇率API
-        // 为了演示，返回模拟汇率
-        const usdtRate = 6.8; // 1 USDT = 6.8 RMB
-
+        const usdtRate = 6.8; // 模拟汇率
         res.json({
             success: true,
             rate: usdtRate,
@@ -390,21 +357,6 @@ function encrypt(text) {
     return iv.toString('hex') + ':' + encrypted;
 }
 
-function decrypt(text) {
-    const algorithm = 'aes-256-cbc';
-    const key = process.env.ENCRYPTION_KEY || 'your-secret-key-here-must-be-32-chars!';
-
-    const textParts = text.split(':');
-    const iv = Buffer.from(textParts.shift(), 'hex');
-    const encryptedText = textParts.join(':');
-
-    const decipher = crypto.createDecipher(algorithm, key);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
-}
-
 // 静态文件服务
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
@@ -420,6 +372,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`🎮 消不停·万币赢 Server running on port ${PORT}`);
     console.log(`🌐 Game URL: http://localhost:${PORT}`);
+    console.log(`🗄️  Database: ${dbManager.getType()}`);
     if (bot) {
         console.log('🤖 Telegram Bot is running');
     }
@@ -428,7 +381,7 @@ app.listen(PORT, () => {
 // 优雅关闭
 process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down server...');
-    db.close();
+    dbManager.close();
     if (bot) {
         bot.stopPolling();
     }
