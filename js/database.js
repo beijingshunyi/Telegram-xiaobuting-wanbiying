@@ -9,12 +9,17 @@ class DatabaseManager {
         try {
             // 初始化IndexedDB
             await this.initIndexedDB();
+
+            // 检查并确保所有必要的表存在
+            await this.ensureTablesExist();
+
             this.isInitialized = true;
             console.log('Database initialized successfully');
         } catch (error) {
             console.error('Failed to initialize database:', error);
             // 降级到localStorage
             this.isInitialized = true;
+            console.log('Falling back to localStorage');
         }
     }
 
@@ -66,6 +71,44 @@ class DatabaseManager {
                     inviteStore.createIndex('inviteeId', 'inviteeId', { unique: true });
                 }
             };
+        });
+    }
+
+    // 确保所有必要的表存在
+    async ensureTablesExist() {
+        if (!this.db) return;
+
+        const requiredStores = ['users', 'gameRecords', 'checkinRecords', 'withdrawalRecords', 'inviteRelations'];
+        const existingStores = Array.from(this.db.objectStoreNames);
+
+        for (const storeName of requiredStores) {
+            if (!existingStores.includes(storeName)) {
+                console.log(`Missing object store: ${storeName}`);
+                // 如果缺少表，需要重新初始化数据库
+                await this.recreateDatabase();
+                break;
+            }
+        }
+    }
+
+    // 重新创建数据库
+    async recreateDatabase() {
+        if (this.db) {
+            this.db.close();
+        }
+
+        return new Promise((resolve, reject) => {
+            const deleteReq = indexedDB.deleteDatabase('XiaoButingWanBiYing');
+            deleteReq.onsuccess = async () => {
+                console.log('Database deleted, recreating...');
+                try {
+                    await this.initIndexedDB();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            deleteReq.onerror = reject;
         });
     }
 

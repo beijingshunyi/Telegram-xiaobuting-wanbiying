@@ -2,9 +2,9 @@ const CONFIG = {
     // 游戏基础配置
     GAME: {
         GRID_SIZE: 8,
-        CELL_SIZE: 50,
-        CANVAS_WIDTH: 400,
-        CANVAS_HEIGHT: 600,
+        CELL_SIZE: 45,
+        CANVAS_WIDTH: 360,
+        CANVAS_HEIGHT: 520,
         ANIMATION_DURATION: 300,
         MATCH_MIN_COUNT: 3,
         INITIAL_MOVES: 30,

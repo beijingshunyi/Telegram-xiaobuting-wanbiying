@@ -579,11 +579,17 @@ adStyles.textContent = `
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 12px;
         padding: 1rem;
-        margin: 1rem 0;
+        margin: 1rem auto;
         cursor: pointer;
         transition: transform 0.3s ease;
         position: relative;
         overflow: hidden;
+        width: 95%;
+        max-width: 500px;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .manual-banner-ad:hover {
@@ -593,8 +599,11 @@ adStyles.textContent = `
     .ad-content {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 1rem;
         color: white;
+        width: 100%;
+        text-align: center;
     }
 
     .ad-image {
@@ -903,9 +912,12 @@ adStyles.textContent = `
     .social-banner-content {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 1rem;
         color: white;
         padding: 0.5rem;
+        width: 100%;
+        text-align: center;
     }
 
     .social-banner .social-icon {

@@ -7,10 +7,35 @@
 
 body {
     font-family: 'Noto Sans SC', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #87CEEB 0%, #98FB98 25%, #87CEFA 50%, #DDA0DD 75%, #F0E68C 100%);
+    background-size: 400% 400%;
+    animation: gradientWave 15s ease infinite;
     min-height: 100vh;
     color: #333;
     overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(120, 219, 226, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 228, 181, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(173, 216, 230, 0.3) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* 海洋波浪动画 */
+@keyframes gradientWave {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .screen {
@@ -19,7 +44,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: inherit;
+    background: transparent;
     display: flex;
     flex-direction: column;
     z-index: 10;
@@ -224,39 +249,46 @@ body {
 /* 游戏模式按钮 */
 .game-modes {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
 }
 
 .game-mode-btn {
-    flex: 1;
-    background: rgba(255,255,255,0.9);
-    border: none;
-    border-radius: 15px;
-    padding: 1.5rem 1rem;
+    background: rgba(255,255,255,0.95);
+    border: 3px solid #FFB6C1;
+    border-radius: 25px;
+    padding: 2rem 4rem;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.4s ease;
+    box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+    backdrop-filter: blur(10px);
+    max-width: 280px;
 }
 
 .game-mode-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(255, 182, 193, 0.4);
+    border-color: #FF69B4;
 }
 
 .game-mode-btn.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 50%, #87CEEB 100%);
     color: white;
+    border-color: #FF1493;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .mode-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .mode-text {
-    font-weight: 500;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
 }
 
 /* 菜单按钮 */
