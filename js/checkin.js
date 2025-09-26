@@ -703,6 +703,7 @@ checkinStyles.textContent = `
         max-height: 85vh;
         overflow-y: auto;
         min-width: 350px;
+        text-align: center;
     }
 
     .checkin-header {
@@ -722,13 +723,16 @@ checkinStyles.textContent = `
 
     .checkin-calendar {
         margin-bottom: 2rem;
+        text-align: center;
     }
 
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 0.5rem;
-        margin-top: 1rem;
+        margin: 1rem auto 0 auto;
+        max-width: 300px;
+        justify-content: center;
     }
 
     .calendar-day {
@@ -809,6 +813,7 @@ checkinStyles.textContent = `
         display: flex;
         gap: 1rem;
         margin-bottom: 2rem;
+        justify-content: center;
     }
 
     .checkin-btn {
@@ -853,7 +858,7 @@ checkinStyles.textContent = `
 
     .reward-track {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         gap: 0.5rem;
         overflow-x: auto;
         padding: 0.5rem 0;
@@ -947,6 +952,7 @@ checkinStyles.textContent = `
         padding: 1rem;
         margin: 1.5rem 0;
         color: #2d3436;
+        text-align: center;
     }
 `;
 

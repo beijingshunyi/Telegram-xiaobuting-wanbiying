@@ -155,9 +155,7 @@ class GameApp {
             this.showAchievements();
         });
 
-        document.getElementById('leaderboard-btn')?.addEventListener('click', () => {
-            this.showLeaderboard();
-        });
+        // Leaderboard is now handled by leaderboard.js
 
         document.getElementById('withdraw-btn')?.addEventListener('click', () => {
             this.showWithdraw();

@@ -70,15 +70,18 @@ class LeaderboardManager {
 
     // 显示排行榜模态框
     showLeaderboardModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.id = 'leaderboard-modal';
+        // 使用现有的模态框容器系统
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) {
+            console.error('Modal container not found');
+            return;
+        }
 
-        modal.innerHTML = `
-            <div class="modal-content">
+        const modalContent = `
+            <div class="modal">
                 <div class="modal-header">
-                    <h3>🎯 排行榜</h3>
-                    <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                    <h2>🎯 排行榜</h2>
+                    <button class="modal-close" onclick="document.getElementById('modal-container').style.display='none'; document.getElementById('modal-container').innerHTML='';">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="leaderboard-tabs">
@@ -93,31 +96,33 @@ class LeaderboardManager {
             </div>
         `;
 
-        document.body.appendChild(modal);
+        modalContainer.innerHTML = modalContent;
+        modalContainer.style.display = 'flex';
 
         // 设置标签页切换
-        const tabBtns = modal.querySelectorAll('.tab-btn');
+        const tabBtns = modalContainer.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const type = e.target.dataset.type;
-                this.switchTab(type, modal);
+                this.switchTab(type, modalContainer);
             });
         });
 
         // 点击背景关闭
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+        modalContainer.addEventListener('click', (e) => {
+            if (e.target === modalContainer) {
+                modalContainer.style.display = 'none';
+                modalContainer.innerHTML = '';
             }
         });
     }
 
     // 切换标签页
-    switchTab(type, modal) {
+    switchTab(type, modalContainer) {
         this.currentType = type;
 
         // 更新标签状态
-        const tabBtns = modal.querySelectorAll('.tab-btn');
+        const tabBtns = modalContainer.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
             if (btn.dataset.type === type) {
                 btn.classList.add('active');
@@ -127,8 +132,10 @@ class LeaderboardManager {
         });
 
         // 更新内容
-        const content = modal.querySelector('.leaderboard-content');
-        content.innerHTML = this.renderLeaderboard(type);
+        const content = modalContainer.querySelector('.leaderboard-content');
+        if (content) {
+            content.innerHTML = this.renderLeaderboard(type);
+        }
     }
 
     // 渲染排行榜
@@ -254,6 +261,18 @@ window.leaderboardManager = new LeaderboardManager();
 // CSS样式
 const style = document.createElement('style');
 style.textContent = `
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-body {
+        padding: 0;
+    }
     .leaderboard-tabs {
         display: flex;
         margin-bottom: 20px;

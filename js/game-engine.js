@@ -50,6 +50,8 @@ class GameEngine {
         this.currentMoveStartTime = null;
         this.gameTimer = null;
         this.moveTimer = null;
+        this.moveCountdownTimer = null;
+        this.moveTimeLeft = 10;
         this.isAnimating = false;
         this.selectedCell = null;
         this.combo = 0;
@@ -1115,15 +1117,20 @@ class GameEngine {
         document.getElementById('game-score').textContent = this.score;
         document.getElementById('game-level').textContent = this.level;
         document.getElementById('moves-left').textContent = this.moves;
-        document.getElementById('time-left').textContent = this.timeLeft;
+        // 显示每步剩余时间而不是全局时间
+        document.getElementById('time-left').textContent = this.moveTimeLeft || this.maxTimePerMove;
 
         // 更新游戏目标进度
         this.updateObjectivesUI();
 
-        // 时间警告
-        if (this.timeLeft <= 10) {
+        // 每步时间警告
+        const currentMoveTime = this.moveTimeLeft || this.maxTimePerMove;
+        if (currentMoveTime <= 3) {
             document.getElementById('time-left').style.color = '#ff4757';
             document.getElementById('time-left').style.animation = 'blink 1s infinite';
+        } else if (currentMoveTime <= 5) {
+            document.getElementById('time-left').style.color = '#ff9500';
+            document.getElementById('time-left').style.animation = 'none';
         } else {
             document.getElementById('time-left').style.color = '#333';
             document.getElementById('time-left').style.animation = 'none';
@@ -1282,8 +1289,30 @@ class GameEngine {
             <div class="reward-info">
                 <p>🎊 恭喜通过第 ${this.level} 关！所有目标已达成！</p>
             </div>
-            <button onclick="window.gameEngine.nextLevel()">下一关</button>
-            <button onclick="window.gameEngine.backToMenu()">返回菜单</button>
+            <button onclick="if(window.gameEngine) { window.gameEngine.nextLevel(); } else { console.error('Game engine not found'); }">下一关</button>
+            <button onclick="if(window.gameEngine) { window.gameEngine.backToMenu(); } else { console.error('Game engine not found'); }">返回菜单</button>
+        `;
+
+        document.getElementById('game-canvas-container').appendChild(modal);
+    }
+
+    showMoveTimeUpModal() {
+        this.clearModals();
+
+        const modal = document.createElement('div');
+        modal.className = 'game-over';
+        modal.innerHTML = `
+            <div class="game-over-content">
+                <div class="game-over-icon">⏰</div>
+                <h2>超时结束</h2>
+                <p>您没有在规定时间内完成操作</p>
+                <div class="final-score">
+                    <p>最终得分: <strong>${this.score}</strong></p>
+                </div>
+                <div class="game-over-buttons">
+                    <button onclick="if(window.gameEngine) { window.gameEngine.backToMenu(); } else { console.error('Game engine not found'); }">返回菜单</button>
+                </div>
+            </div>
         `;
 
         document.getElementById('game-canvas-container').appendChild(modal);
@@ -1299,8 +1328,8 @@ class GameEngine {
                 <div>目标得分: ${this.targetScore}</div>
                 <div>达成率: ${Math.floor((this.score / this.targetScore) * 100)}%</div>
             </div>
-            <button onclick="window.gameEngine.restartLevel()">重新开始</button>
-            <button onclick="window.gameEngine.backToMenu()">返回菜单</button>
+            <button onclick="if(window.gameEngine) { window.gameEngine.restartLevel(); } else { console.error('Game engine not found'); }">重新开始</button>
+            <button onclick="if(window.gameEngine) { window.gameEngine.backToMenu(); } else { console.error('Game engine not found'); }">返回菜单</button>
         `;
 
         document.getElementById('game-canvas-container').appendChild(modal);
@@ -1388,8 +1417,20 @@ class GameEngine {
     }
 
     clearModals() {
-        const modals = document.querySelectorAll('.level-complete, .game-over, .pause-menu');
-        modals.forEach(modal => modal.remove());
+        // 清理所有游戏相关的模态框
+        const modals = document.querySelectorAll('.level-complete, .game-over, .pause-menu, .modal-container');
+        modals.forEach(modal => {
+            if (modal) {
+                modal.remove();
+            }
+        });
+
+        // 确保清理在游戏画布容器中的模态框
+        const canvasContainer = document.getElementById('game-canvas-container');
+        if (canvasContainer) {
+            const canvasModals = canvasContainer.querySelectorAll('.level-complete, .game-over, .pause-menu');
+            canvasModals.forEach(modal => modal.remove());
+        }
     }
 
     async startGame() {
@@ -1478,46 +1519,43 @@ class GameEngine {
         // 清除已有的计时器
         this.stopTimers();
 
-        // 总游戏时间倒计时
-        this.gameTimer = setInterval(() => {
-            this.timeLeft--;
-            // 确保时间不会变成负数
-            if (this.timeLeft < 0) {
-                this.timeLeft = 0;
-            }
-            this.updateGameUI();
-
-            // 时间归零立即结束游戏
-            if (this.timeLeft <= 0) {
-                this.stopTimers(); // 停止所有计时器
-                this.gameState = 'gameover';
-                this.showTimeUpModal(); // 显示时间到弹窗
-                return;
-            }
-        }, 1000);
-
-        // 开始第一步的计时
+        // 开始第一步的计时（移除全局计时器，改为每步计时）
         this.startMoveTimer();
     }
 
     startMoveTimer() {
         this.currentMoveStartTime = Date.now();
+        this.moveTimeLeft = this.maxTimePerMove;
 
         this.moveTimer = setTimeout(() => {
             if (this.gameState === 'playing') {
-                // 超时扣分
-                this.score = Math.max(0, this.score - 50);
-                this.updateGameUI();
-
-                // 继续下一步
-                this.startMoveTimer();
+                // 每步超时直接结束游戏
+                this.stopTimers();
+                this.gameState = 'gameover';
+                this.showMoveTimeUpModal();
             }
         }, this.maxTimePerMove * 1000);
+
+        // 添加每秒更新move time left的计时器
+        this.moveCountdownTimer = setInterval(() => {
+            if (this.gameState === 'playing') {
+                this.moveTimeLeft--;
+                this.updateGameUI();
+
+                if (this.moveTimeLeft <= 0) {
+                    clearInterval(this.moveCountdownTimer);
+                }
+            }
+        }, 1000);
     }
 
     resetMoveTimer() {
         if (this.moveTimer) {
             clearTimeout(this.moveTimer);
+        }
+
+        if (this.moveCountdownTimer) {
+            clearInterval(this.moveCountdownTimer);
         }
 
         if (this.gameState === 'playing') {
@@ -1534,6 +1572,11 @@ class GameEngine {
         if (this.moveTimer) {
             clearTimeout(this.moveTimer);
             this.moveTimer = null;
+        }
+
+        if (this.moveCountdownTimer) {
+            clearInterval(this.moveCountdownTimer);
+            this.moveCountdownTimer = null;
         }
     }
 
