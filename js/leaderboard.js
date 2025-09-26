@@ -7,7 +7,14 @@ class LeaderboardManager {
             weekly: [],
             monthly: []
         };
-        this.initialize();
+
+        // 延迟初始化，确保DOM加载完成
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initialize());
+        } else {
+            // DOM已经加载完成
+            this.initialize();
+        }
     }
 
     async initialize() {
@@ -24,7 +31,13 @@ class LeaderboardManager {
     setupEventListeners() {
         const leaderboardBtn = document.getElementById('leaderboard-btn');
         if (leaderboardBtn) {
-            leaderboardBtn.addEventListener('click', () => this.showLeaderboardModal());
+            leaderboardBtn.addEventListener('click', () => {
+                console.log('Leaderboard button clicked');
+                this.showLeaderboardModal();
+            });
+            console.log('Leaderboard event listener attached');
+        } else {
+            console.error('Leaderboard button not found');
         }
     }
 
@@ -70,12 +83,14 @@ class LeaderboardManager {
 
     // 显示排行榜模态框
     showLeaderboardModal() {
+        console.log('showLeaderboardModal called');
         // 使用现有的模态框容器系统
         const modalContainer = document.getElementById('modal-container');
         if (!modalContainer) {
             console.error('Modal container not found');
             return;
         }
+        console.log('Modal container found, showing leaderboard');
 
         const modalContent = `
             <div class="modal">

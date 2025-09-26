@@ -4,7 +4,13 @@ class SocialManager {
         this.shareCount = 0;
         this.inviteCount = 0;
         this.dailyShareLimit = CONFIG.SOCIAL.SHARE_DAILY_LIMIT;
-        this.initialize();
+
+        // 延迟初始化，确保DOM加载完成
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initialize());
+        } else {
+            this.initialize();
+        }
     }
 
     async initialize() {

@@ -1202,11 +1202,16 @@ class GameEngine {
     }
 
     async onLevelComplete() {
-        // 计算奖励
-        const baseReward = this.level * 50;
-        const scoreBonus = Math.floor(this.score / 1000) * 10;
-        const movesBonus = this.moves * 5;
-        const totalReward = baseReward + scoreBonus + movesBonus;
+        // 重新设计的经济平衡奖励计算
+        const baseReward = Math.min(this.level * 3, 30); // 基础奖励：每关3币，最高30币
+        const scoreBonus = Math.floor(this.score / 2000) * 2; // 分数奖励：每2000分给2币
+        const movesBonus = Math.floor(this.moves / 5) * 1; // 步数奖励：每5步剩余给1币
+        const levelMultiplier = Math.min(1 + this.level * 0.1, 2); // 关卡倍数：最高2倍
+
+        let totalReward = Math.floor((baseReward + scoreBonus + movesBonus) * levelMultiplier);
+
+        // 应用每日和每月上限
+        totalReward = await this.applyEconomyLimits(totalReward);
 
         // 给用户奖励
         await window.userManager.addCoins(totalReward, `完成第${this.level}关奖励`);
@@ -1230,6 +1235,44 @@ class GameEngine {
 
         // 触觉反馈
         window.telegramApp.hapticFeedback('success');
+    }
+
+    // 应用经济限制
+    async applyEconomyLimits(proposedReward) {
+        const user = window.userManager.getCurrentUser();
+        const today = new Date().toDateString();
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+        // 获取今日和本月已获得的万花币
+        const dailyEarnings = await window.dbManager.getDailyEarnings(user.id, today);
+        const monthlyEarnings = await window.dbManager.getMonthlyEarnings(user.id, currentMonth);
+
+        // 设置限制（基于用户等级判断是否为深度玩家）
+        const isDeepPlayer = user.level >= 20 || user.totalGames >= 100;
+        const dailyLimit = isDeepPlayer ? 150 : 100; // 深度玩家每日150币，普通玩家100币
+        const monthlyLimit = isDeepPlayer ? 3500 : 2500; // 月限制
+
+        // 计算剩余可获得额度
+        const dailyRemaining = Math.max(0, dailyLimit - dailyEarnings);
+        const monthlyRemaining = Math.max(0, monthlyLimit - monthlyEarnings);
+
+        // 取两个限制中的最小值
+        const maxAllowedReward = Math.min(dailyRemaining, monthlyRemaining);
+        const finalReward = Math.min(proposedReward, maxAllowedReward);
+
+        // 如果奖励被限制了，给玩家提示
+        if (finalReward < proposedReward) {
+            const reason = dailyRemaining <= monthlyRemaining ? '每日' : '每月';
+            if (window.uiManager) {
+                window.uiManager.showNotification(
+                    `已达到${reason}万花币获取上限，今日获得${finalReward}币`,
+                    'warning',
+                    3000
+                );
+            }
+        }
+
+        return finalReward;
     }
 
     async onGameOver() {
@@ -1456,9 +1499,13 @@ class GameEngine {
         this.particles = [];
         this.gameState = 'playing';
 
-        // 初始化游戏目标系统
+        // 初始化游戏目标系统（但不启动它的计时器）
         if (window.gameObjectives) {
-            window.gameObjectives.initLevel(this.level);
+            // 停止gameObjectives自己的计时器
+            window.gameObjectives.stopTimers();
+            // 只生成目标，不启动计时器
+            window.gameObjectives.currentObjectives = window.gameObjectives.generateObjectives(this.level);
+            window.gameObjectives.updateObjectiveDisplay();
         }
 
         // 初始化游戏目标

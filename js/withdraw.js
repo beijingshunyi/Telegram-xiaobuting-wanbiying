@@ -7,7 +7,13 @@ class WithdrawManager {
         };
         this.feeRate = CONFIG.WITHDRAW.FEE_RATE;
         this.usdtRate = 6.8; // 默认汇率
-        this.initialize();
+
+        // 延迟初始化，确保DOM加载完成
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initialize());
+        } else {
+            this.initialize();
+        }
     }
 
     async initialize() {
@@ -52,7 +58,7 @@ class WithdrawManager {
         modal.className = 'modal show';
         modal.id = 'withdraw-modal';
 
-        const userBalance = window.currencyManager ? window.currencyManager.getBalance() : 0;
+        const userBalance = window.userManager ? window.userManager.getCurrentUser().coins : 0;
 
         modal.innerHTML = `
             <div class="modal-content">
@@ -125,7 +131,7 @@ class WithdrawManager {
         modal.className = 'modal show';
         modal.id = 'withdraw-form-modal';
 
-        const userBalance = window.currencyManager ? window.currencyManager.getBalance() : 0;
+        const userBalance = window.userManager ? window.userManager.getCurrentUser().coins : 0;
         const minAmount = this.minAmounts[method];
         const maxAmount = userBalance;
 
@@ -260,7 +266,7 @@ class WithdrawManager {
             return;
         }
 
-        const userBalance = window.currencyManager ? window.currencyManager.getBalance() : 0;
+        const userBalance = window.userManager ? window.userManager.getCurrentUser().coins : 0;
         if (amount > userBalance) {
             window.uiManager.showNotification('余额不足', 'error');
             return;
@@ -302,8 +308,8 @@ class WithdrawManager {
                 const data = await response.json();
 
                 // 扣除万花币
-                if (window.currencyManager) {
-                    await window.currencyManager.spendCoins(amount, `${method}提现`);
+                if (window.userManager) {
+                    await window.userManager.spendCoins(amount, `${method}提现`);
                 }
 
                 window.uiManager.showNotification(

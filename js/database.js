@@ -470,6 +470,109 @@ class DatabaseManager {
             console.error('Failed to cleanup expired data:', error);
         }
     }
+
+    // 获取每日收入
+    async getDailyEarnings(userId, date) {
+        try {
+            if (!this.db) {
+                // 使用localStorage fallback
+                const key = `daily_earnings_${userId}_${date}`;
+                return parseInt(localStorage.getItem(key)) || 0;
+            }
+
+            const transaction = this.db.transaction(['gameRecords'], 'readonly');
+            const store = transaction.objectStore('gameRecords');
+            const index = store.index('userId');
+
+            const records = [];
+            const request = index.openCursor(IDBKeyRange.only(userId));
+
+            return new Promise((resolve) => {
+                let totalEarnings = 0;
+                const targetDate = new Date(date).toDateString();
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const record = cursor.value;
+                        const recordDate = new Date(record.timestamp).toDateString();
+
+                        if (recordDate === targetDate && record.coinsEarned) {
+                            totalEarnings += record.coinsEarned;
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(totalEarnings);
+                    }
+                };
+
+                request.onerror = () => resolve(0);
+            });
+        } catch (error) {
+            console.error('Failed to get daily earnings:', error);
+            return 0;
+        }
+    }
+
+    // 获取每月收入
+    async getMonthlyEarnings(userId, monthString) {
+        try {
+            if (!this.db) {
+                // 使用localStorage fallback
+                const key = `monthly_earnings_${userId}_${monthString}`;
+                return parseInt(localStorage.getItem(key)) || 0;
+            }
+
+            const transaction = this.db.transaction(['gameRecords'], 'readonly');
+            const store = transaction.objectStore('gameRecords');
+            const index = store.index('userId');
+
+            return new Promise((resolve) => {
+                let totalEarnings = 0;
+                const request = index.openCursor(IDBKeyRange.only(userId));
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const record = cursor.value;
+                        const recordMonth = new Date(record.timestamp).toISOString().slice(0, 7);
+
+                        if (recordMonth === monthString && record.coinsEarned) {
+                            totalEarnings += record.coinsEarned;
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(totalEarnings);
+                    }
+                };
+
+                request.onerror = () => resolve(0);
+            });
+        } catch (error) {
+            console.error('Failed to get monthly earnings:', error);
+            return 0;
+        }
+    }
+
+    // 更新每日收入缓存（用于localStorage fallback）
+    async updateEarningsCache(userId, amount, date) {
+        try {
+            const today = date || new Date().toDateString();
+            const currentMonth = new Date().toISOString().slice(0, 7);
+
+            // 更新每日缓存
+            const dailyKey = `daily_earnings_${userId}_${today}`;
+            const currentDaily = parseInt(localStorage.getItem(dailyKey)) || 0;
+            localStorage.setItem(dailyKey, (currentDaily + amount).toString());
+
+            // 更新每月缓存
+            const monthlyKey = `monthly_earnings_${userId}_${currentMonth}`;
+            const currentMonthly = parseInt(localStorage.getItem(monthlyKey)) || 0;
+            localStorage.setItem(monthlyKey, (currentMonthly + amount).toString());
+        } catch (error) {
+            console.error('Failed to update earnings cache:', error);
+        }
+    }
 }
 
 // 全局数据库管理器实例

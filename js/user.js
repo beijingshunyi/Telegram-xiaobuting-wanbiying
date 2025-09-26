@@ -149,6 +149,9 @@ class UserManager {
 
             this.updateUI();
 
+            // 更新收入缓存以支持经济限制系统
+            await window.dbManager.updateEarningsCache(this.currentUser.id, amount);
+
             // 播放金币音效
             this.playCoinSound();
 
@@ -345,8 +348,9 @@ class UserManager {
         const userLevelEl = document.getElementById('user-level');
         const userAvatarEl = document.getElementById('user-avatar');
         const coinCountEl = document.getElementById('coin-count');
-        const energyCountEl = document.getElementById('energy-count');
-        const energyFillEl = document.getElementById('energy-fill');
+        // 体力显示已移除
+        // const energyCountEl = document.getElementById('energy-count');
+        // const energyFillEl = document.getElementById('energy-fill');
 
         if (usernameEl) {
             usernameEl.textContent = this.currentUser.firstName || this.currentUser.username || '玩家';
@@ -364,14 +368,15 @@ class UserManager {
             coinCountEl.textContent = this.formatNumber(this.currentUser.coins);
         }
 
-        if (energyCountEl) {
-            energyCountEl.textContent = this.currentUser.energy;
-        }
-
-        if (energyFillEl) {
-            const energyPercent = (this.currentUser.energy / CONFIG.GAME.ENERGY_MAX) * 100;
-            energyFillEl.style.width = `${energyPercent}%`;
-        }
+        // 体力显示功能已移除
+        // if (energyCountEl) {
+        //     energyCountEl.textContent = this.currentUser.energy;
+        // }
+        //
+        // if (energyFillEl) {
+        //     const energyPercent = (this.currentUser.energy / CONFIG.GAME.ENERGY_MAX) * 100;
+        //     energyFillEl.style.width = `${energyPercent}%`;
+        // }
 
         // 更新道具数量
         Object.keys(CONFIG.TOOLS).forEach(toolType => {
