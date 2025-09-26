@@ -703,7 +703,15 @@ class GameApp {
     }
 
     inviteFriends() {
+        console.log('inviteFriends called');
         try {
+            // Check if modal manager exists first
+            if (!window.modalManager) {
+                console.warn('Modal manager not available, using Telegram fallback');
+                window.telegramApp.inviteFriend();
+                return;
+            }
+
             // Use the dedicated social manager if available
             if (window.socialManager && typeof window.socialManager.showInviteModal === 'function') {
                 console.log('使用社交管理器显示邀请弹窗');

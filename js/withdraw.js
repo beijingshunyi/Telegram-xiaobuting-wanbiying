@@ -54,17 +54,21 @@ class WithdrawManager {
 
     // 显示提现模态框
     showWithdrawModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.id = 'withdraw-modal';
+        console.log('showWithdrawModal called');
+        // 使用标准模态框容器系统
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) {
+            console.error('Modal container not found');
+            return;
+        }
 
         const userBalance = window.userManager ? window.userManager.getCurrentUser().coins : 0;
 
-        modal.innerHTML = `
-            <div class="modal-content">
+        const modalContent = `
+            <div class="modal">
                 <div class="modal-header">
-                    <h3>💰 提现中心</h3>
-                    <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                    <h2>💰 提现中心</h2>
+                    <button class="modal-close" onclick="document.getElementById('modal-container').style.display='none'; document.getElementById('modal-container').innerHTML='';">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="balance-info">
@@ -106,10 +110,11 @@ class WithdrawManager {
             </div>
         `;
 
-        document.body.appendChild(modal);
+        modalContainer.innerHTML = modalContent;
+        modalContainer.style.display = 'flex';
 
         // 设置提现方式选择
-        const methodCards = modal.querySelectorAll('.method-card:not(.disabled)');
+        const methodCards = modalContainer.querySelectorAll('.method-card:not(.disabled)');
         methodCards.forEach(card => {
             card.addEventListener('click', () => {
                 const method = card.dataset.method;
@@ -118,18 +123,23 @@ class WithdrawManager {
         });
 
         // 点击背景关闭
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+        modalContainer.addEventListener('click', (e) => {
+            if (e.target === modalContainer) {
+                modalContainer.style.display = 'none';
+                modalContainer.innerHTML = '';
             }
         });
     }
 
     // 显示提现表单
     showWithdrawForm(method) {
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.id = 'withdraw-form-modal';
+        console.log('showWithdrawForm called with method:', method);
+        // 使用标准模态框容器系统
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) {
+            console.error('Modal container not found');
+            return;
+        }
 
         const userBalance = window.userManager ? window.userManager.getCurrentUser().coins : 0;
         const minAmount = this.minAmounts[method];
@@ -137,11 +147,11 @@ class WithdrawManager {
 
         const isAlipay = method === 'alipay';
 
-        modal.innerHTML = `
-            <div class="modal-content">
+        const modalContent = `
+            <div class="modal">
                 <div class="modal-header">
-                    <h3>${isAlipay ? '💳 支付宝提现' : '₿ USDT提现'}</h3>
-                    <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                    <h2>${isAlipay ? '💳 支付宝提现' : '₿ USDT提现'}</h2>
+                    <button class="modal-close" onclick="document.getElementById('modal-container').style.display='none'; document.getElementById('modal-container').innerHTML='';">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form class="withdraw-form" id="withdraw-form">
@@ -200,16 +210,17 @@ class WithdrawManager {
             </div>
         `;
 
-        document.body.removeChild(document.getElementById('withdraw-modal'));
-        document.body.appendChild(modal);
+        modalContainer.innerHTML = modalContent;
+        modalContainer.style.display = 'flex';
 
         // 设置表单事件
-        this.setupWithdrawForm(modal, method);
+        this.setupWithdrawForm(modalContainer, method);
 
         // 点击背景关闭
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+        modalContainer.addEventListener('click', (e) => {
+            if (e.target === modalContainer) {
+                modalContainer.style.display = 'none';
+                modalContainer.innerHTML = '';
             }
         });
     }

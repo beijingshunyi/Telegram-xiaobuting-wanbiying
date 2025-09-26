@@ -40,17 +40,24 @@
                     <div class="username" id="username">加载中...</div>
                     <div class="user-level">等级 <span id="user-level">1</span></div>
                 </div>
-            </div>
-            <div class="currency-info">
-                <div class="coin-count">
-                    <span class="coin-icon">🪙</span>
-                    <span class="coin-label">万花币：</span>
-                    <span id="coin-count">0</span>
-                </div>
-                <div class="attempts-display">
-                    <span class="attempts-icon">🎮</span>
-                    <span>游戏次数：<span id="daily-attempts">6</span></span>
-                    <span id="attempts-warning" class="btn-badge">!</span>
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">🪙</div>
+                        <div class="stat-info">
+                            <div class="stat-label">万花币</div>
+                            <div class="stat-value" id="coin-count">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-info">
+                            <div class="stat-label">游戏次数</div>
+                            <div class="stat-value">
+                                <span id="daily-attempts">6</span>
+                                <span id="attempts-warning" class="btn-badge">!</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,9 +119,18 @@
                  data-full-width-responsive="true"></ins>
         </div>
 
-        <div class="sponsor-info">
-            <p>本游戏由"北京修车【万花楼】"赞助，开发<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> 合作联系<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a> 广告联系<a href="#" class="sponsor-link" onclick="window.telegramApp.openTelegramUser('@bjxc010')">@bjxc010</a></p>
-        </div>
+        <!-- 页脚版权信息 -->
+        <footer class="game-footer">
+            <div class="copyright-info">
+                <p class="game-title">🎮 消不停·万币赢</p>
+                <p class="sponsor-text">
+                    💖 赞助商：北京修车【万花楼】<br>
+                    👨‍💻 开发：<a href="#" class="footer-link" onclick="window.telegramApp?.openTelegramUser('@bjxc010')">@bjxc010</a><br>
+                    🤝 合作：<a href="#" class="footer-link" onclick="window.telegramApp?.openTelegramUser('@bjxc010')">@bjxc010</a>
+                </p>
+                <p class="version-info">© 2024 版本 1.0.0</p>
+            </div>
+        </footer>
     </div>
 
     <!-- 游戏界面 -->

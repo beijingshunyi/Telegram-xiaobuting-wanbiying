@@ -1296,6 +1296,8 @@ class GameEngine {
     }
 
     showLevelCompleteScreen(reward) {
+        this.clearModals();
+
         const modal = document.createElement('div');
         modal.className = 'level-complete';
 
@@ -1362,6 +1364,8 @@ class GameEngine {
     }
 
     showGameOverScreen() {
+        this.clearModals();
+
         const modal = document.createElement('div');
         modal.className = 'game-over';
         modal.innerHTML = `

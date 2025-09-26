@@ -131,10 +131,12 @@ class SocialManager {
                 </div>
         `;
 
+            console.log('调用 modalManager.show');
             return window.modalManager.show(content, { closable: true, closeOnBackdrop: true });
         } catch (error) {
             console.error('邀请弹窗显示失败:', error);
             // 降级到简单的邀请分享
+            console.log('使用 Telegram 降级分享');
             window.telegramApp.inviteFriend();
         }
     }

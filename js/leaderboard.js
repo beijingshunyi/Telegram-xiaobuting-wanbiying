@@ -53,6 +53,8 @@ class LeaderboardManager {
                     this.leaderboardData[type] = data.leaderboard || [];
                 } else {
                     console.error(`获取${type}排行榜失败:`, response.statusText);
+                    // 使用模拟数据
+                    this.leaderboardData[type] = this.generateMockData(type);
                 }
             } catch (error) {
                 console.error(`加载${type}排行榜失败:`, error);
@@ -91,6 +93,16 @@ class LeaderboardManager {
             return;
         }
         console.log('Modal container found, showing leaderboard');
+
+        // 确保有排行榜数据
+        if (!this.leaderboardData || Object.keys(this.leaderboardData).length === 0) {
+            console.warn('No leaderboard data available, using mock data');
+            this.leaderboardData = {
+                daily: this.generateMockData('daily'),
+                weekly: this.generateMockData('weekly'),
+                monthly: this.generateMockData('monthly')
+            };
+        }
 
         const modalContent = `
             <div class="modal">
