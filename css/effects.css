@@ -1,0 +1,545 @@
+/* ===== 特效动画样式 ===== */
+
+/* ===== 粒子系统 ===== */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.particle.star {
+  background: radial-gradient(circle, #FFD700, #FFA500);
+  box-shadow: 0 0 10px #FFD700;
+}
+
+.particle.heart {
+  background: radial-gradient(circle, #FF69B4, #FF1493);
+  box-shadow: 0 0 10px #FF69B4;
+}
+
+.particle.coin {
+  background: radial-gradient(circle, #FFE66D, #FFC107);
+  box-shadow: 0 0 8px #FFE66D;
+}
+
+.particle.sparkle {
+  background: radial-gradient(circle, #FFFFFF, #E0E0E0);
+  box-shadow: 0 0 12px #FFFFFF;
+}
+
+/* ===== 消除特效 ===== */
+.match-highlight {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: matchGlow 0.5s ease-out;
+  z-index: 100;
+}
+
+@keyframes matchGlow {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ===== 特殊元素激活特效 ===== */
+.rocket-trail {
+  position: absolute;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #FF6B9D, #FFE66D, transparent);
+  pointer-events: none;
+  z-index: 90;
+  animation: rocketMove 0.8s ease-out;
+}
+
+.rocket-trail.horizontal {
+  width: 100%;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.rocket-trail.vertical {
+  width: 4px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%) rotate(90deg);
+}
+
+@keyframes rocketMove {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(1);
+  }
+}
+
+.bomb-explosion {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 157, 0.8), rgba(255, 230, 109, 0.6), transparent);
+  pointer-events: none;
+  z-index: 95;
+  animation: bombBlast 0.6s ease-out;
+}
+
+@keyframes bombBlast {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ===== 连击特效 ===== */
+.combo-particle {
+  position: absolute;
+  font-size: 1.5rem;
+  color: #FFE66D;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 200;
+  animation: comboFloat 2s ease-out forwards;
+}
+
+@keyframes comboFloat {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1.2) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) translateY(-100px) rotate(-5deg);
+    opacity: 0;
+  }
+}
+
+/* ===== 得分飞行特效 ===== */
+.score-popup {
+  position: absolute;
+  font-family: 'GameFont', var(--font-family-game);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4CAF50;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 150;
+  animation: scoreRise 2s ease-out forwards;
+}
+
+.score-popup.big {
+  font-size: 2.5rem;
+  color: #FF6B9D;
+}
+
+.score-popup.mega {
+  font-size: 3rem;
+  color: #FFE66D;
+  animation: scoreMega 2.5s ease-out forwards;
+}
+
+@keyframes scoreRise {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1.1) translateY(-20px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9) translateY(-80px);
+    opacity: 0;
+  }
+}
+
+@keyframes scoreMega {
+  0% {
+    transform: scale(0) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  15% {
+    transform: scale(1.3) translateY(-10px) rotate(5deg);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.1) translateY(-30px) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) translateY(-100px) rotate(2deg);
+    opacity: 0;
+  }
+}
+
+/* ===== 元素掉落特效 ===== */
+.falling-element {
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.falling-element.bouncing {
+  animation: elementBounce 0.3s ease-out;
+}
+
+@keyframes elementBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 消除波纹特效 ===== */
+.elimination-ripple {
+  position: absolute;
+  border: 2px solid rgba(255, 107, 157, 0.6);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 80;
+  animation: rippleEffect 1s ease-out;
+}
+
+@keyframes rippleEffect {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+    border-width: 4px;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* ===== 能量充电特效 ===== */
+.energy-charge {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, #4ECDC4, transparent);
+  pointer-events: none;
+  z-index: 70;
+  animation: energySpin 1.5s linear infinite;
+}
+
+@keyframes energySpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 成功/失败动画 ===== */
+.success-burst {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1500;
+  background: radial-gradient(circle at center, rgba(76, 175, 80, 0.3), transparent);
+  animation: successFlash 0.8s ease-out;
+}
+
+@keyframes successFlash {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.failure-shake {
+  animation: failureShake 0.6s ease-out;
+}
+
+@keyframes failureShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* ===== 彩虹猫头鹰特效 ===== */
+.rainbow-owl-aura {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #FF6B9D,
+    #FFE66D,
+    #4ECDC4,
+    #9B59B6,
+    #FF6B9D
+  );
+  pointer-events: none;
+  z-index: 60;
+  animation: rainbowRotate 3s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes rainbowRotate {
+  0% { transform: scale(0.9) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(180deg); }
+  100% { transform: scale(0.9) rotate(360deg); }
+}
+
+/* ===== 星星收集特效 ===== */
+.star-collect {
+  position: absolute;
+  font-size: 2rem;
+  color: #FFD700;
+  text-shadow: 0 0 10px #FFD700;
+  pointer-events: none;
+  z-index: 180;
+  animation: starCollect 1.5s ease-out forwards;
+}
+
+@keyframes starCollect {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.3) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.5) rotate(360deg) translateY(-150px);
+    opacity: 0;
+  }
+}
+
+/* ===== 万花币飞行特效 ===== */
+.coin-fly {
+  position: fixed;
+  font-size: 1.5rem;
+  color: #FFE66D;
+  text-shadow: 0 0 8px #FFE66D;
+  pointer-events: none;
+  z-index: 1200;
+  animation: coinFly 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes coinFly {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.8) rotate(720deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.3) rotate(1080deg);
+    opacity: 0;
+  }
+}
+
+/* ===== 按钮点击波纹 ===== */
+.button-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.button-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.button-ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ===== 加载动画 ===== */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid #FF6B9D;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 脉冲动画 ===== */
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 107, 157, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 107, 157, 0.8), 0 0 30px rgba(255, 107, 157, 0.6);
+  }
+}
+
+/* ===== 闪烁提示 ===== */
+.attention-blink {
+  animation: attentionBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes attentionBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== 弹跳进入 ===== */
+.bounce-in {
+  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(90deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* ===== 滑出动画 ===== */
+.slide-out-left {
+  animation: slideOutLeft 0.3s ease-in forwards;
+}
+
+.slide-out-right {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutLeft {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes slideOutRight {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* ===== 渐变背景动画 ===== */
+.animated-gradient {
+  background: linear-gradient(-45deg, #667eea, #764ba2, #667eea, #764ba2);
+  background-size: 400% 400%;
+  animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== 响应式动画优化 ===== */
+@media (max-width: 480px) {
+  .particle {
+    width: 4px;
+    height: 4px;
+  }
+
+  .combo-particle {
+    font-size: 1.2rem;
+  }
+
+  .score-popup {
+    font-size: 1.5rem;
+  }
+
+  .score-popup.big {
+    font-size: 2rem;
+  }
+
+  .score-popup.mega {
+    font-size: 2.5rem;
+  }
+
+  .coin-fly {
+    font-size: 1.2rem;
+  }
+
+  .bomb-explosion {
+    width: 150px;
+    height: 150px;
+  }
+
+  .star-collect {
+    font-size: 1.5rem;
+  }
+}
+
+/* ===== 减少动画（对于低性能设备） ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .floating-coins::before,
+  .floating-coins::after {
+    animation: none;
+  }
+
+  .character {
+    animation: none;
+  }
+
+  .pulse-glow {
+    animation: none;
+    box-shadow: 0 0 5px rgba(255, 107, 157, 0.5);
+  }
+}

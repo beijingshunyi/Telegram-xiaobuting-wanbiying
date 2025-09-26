@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>消不停·万币赢 - 像素级复刻天天爱消除</title>
+    <meta name="description" content="像素级复刻腾讯天天爱消除，集成万花币经济系统，支持支付宝/USDT提现">
+    <meta name="keywords" content="消除游戏,天天爱消除,万花币,提现,三消游戏">
+
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/effects.css">
+
+    <!-- PWA支持 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF6B9D">
+    <link rel="icon" type="image/png" href="assets/images/icon-192.png">
+
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="assets/sounds/bg_music.mp3" as="audio">
+    <link rel="preload" href="assets/fonts/game-font.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+    <!-- 游戏加载界面 -->
+    <div id="loading-screen" class="screen active">
+        <div class="loading-logo">
+            <h1>消不停·万币赢</h1>
+            <p>像素级复刻天天爱消除</p>
+        </div>
+        <div class="loading-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="loading-progress"></div>
+            </div>
+            <p class="loading-text">正在加载游戏资源...</p>
+        </div>
+        <div class="sponsor-info">
+            <p>本游戏由: 北京修车【万花楼】赞助</p>
+            <p>由 <a href="tg://resolve?domain=bjxc010">@bjxc010</a> 开发 合作 <a href="tg://resolve?domain=bjxc010">@bjxc010</a></p>
+        </div>
+    </div>
+
+    <!-- 主菜单界面 -->
+    <div id="main-menu" class="screen">
+        <div class="menu-background">
+            <div class="floating-coins"></div>
+        </div>
+        <div class="menu-content">
+            <div class="game-logo">
+                <h1>消不停·万币赢</h1>
+                <div class="character-preview">
+                    <div class="character" data-type="yellow-cat"></div>
+                    <div class="character" data-type="brown-bear"></div>
+                    <div class="character" data-type="pink-rabbit"></div>
+                    <div class="character" data-type="purple-cat"></div>
+                </div>
+            </div>
+
+            <div class="user-info">
+                <div class="avatar-frame">
+                    <img src="assets/images/ui/default-avatar.png" alt="头像" id="user-avatar">
+                </div>
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">万花币</span>
+                        <span class="stat-value" id="user-coins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">体力</span>
+                        <span class="stat-value" id="user-energy">5/5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="play-button">
+                    <span class="btn-icon">🎮</span>
+                    <span class="btn-text">开始游戏</span>
+                </button>
+                <button class="btn btn-secondary" id="withdraw-button">
+                    <span class="btn-icon">💰</span>
+                    <span class="btn-text">提现中心</span>
+                </button>
+                <button class="btn btn-secondary" id="leaderboard-button">
+                    <span class="btn-icon">🏆</span>
+                    <span class="btn-text">排行榜</span>
+                </button>
+                <button class="btn btn-secondary" id="settings-button">
+                    <span class="btn-icon">⚙️</span>
+                    <span class="btn-text">设置</span>
+                </button>
+            </div>
+
+            <div class="daily-checkin">
+                <button class="btn btn-special" id="checkin-button">
+                    <span class="btn-text">每日签到</span>
+                    <span class="checkin-reward">+100万花币</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 地图选择界面 -->
+    <div id="level-map" class="screen">
+        <div class="map-header">
+            <button class="btn-back" id="map-back-button">←</button>
+            <h2>关卡地图</h2>
+            <div class="map-stats">
+                <span id="current-level">关卡 1</span>
+                <span id="total-stars">⭐ 0</span>
+            </div>
+        </div>
+        <div class="map-container">
+            <div class="map-path" id="level-path">
+                <!-- 关卡节点将动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <div class="header-left">
+                <button class="btn-pause" id="pause-button">⏸️</button>
+                <span class="level-number" id="game-level">第 1 关</span>
+            </div>
+            <div class="header-center">
+                <div class="objectives" id="game-objectives">
+                    <!-- 关卡目标将动态生成 -->
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="moves-counter">
+                    <span class="moves-label">步数</span>
+                    <span class="moves-value" id="moves-left">25</span>
+                </div>
+                <div class="score-display">
+                    <span class="score-value" id="current-score">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board-container">
+            <canvas id="game-canvas" width="640" height="640"></canvas>
+            <div class="combo-display" id="combo-display">
+                <span class="combo-text"></span>
+            </div>
+        </div>
+
+        <div class="game-footer">
+            <div class="power-ups">
+                <button class="powerup-btn" data-type="hammer" id="hammer-powerup">
+                    <span class="powerup-icon">🔨</span>
+                    <span class="powerup-count">3</span>
+                </button>
+                <button class="powerup-btn" data-type="shuffle" id="shuffle-powerup">
+                    <span class="powerup-icon">🔀</span>
+                    <span class="powerup-count">2</span>
+                </button>
+                <button class="powerup-btn" data-type="rainbow" id="rainbow-powerup">
+                    <span class="powerup-icon">🌈</span>
+                    <span class="powerup-count">1</span>
+                </button>
+            </div>
+            <button class="btn btn-ad" id="watch-ad-button">
+                📺 看广告获得道具
+            </button>
+        </div>
+    </div>
+
+    <!-- 暂停菜单 -->
+    <div id="pause-menu" class="modal">
+        <div class="modal-content">
+            <h3>游戏暂停</h3>
+            <button class="btn btn-primary" id="resume-button">继续游戏</button>
+            <button class="btn btn-secondary" id="restart-button">重新开始</button>
+            <button class="btn btn-secondary" id="quit-button">退出关卡</button>
+        </div>
+    </div>
+
+    <!-- 关卡完成弹窗 -->
+    <div id="level-complete" class="modal">
+        <div class="modal-content success">
+            <h3>关卡完成！</h3>
+            <div class="stars-display">
+                <span class="star" data-star="1">⭐</span>
+                <span class="star" data-star="2">⭐</span>
+                <span class="star" data-star="3">⭐</span>
+            </div>
+            <div class="rewards">
+                <div class="reward-item">
+                    <span class="reward-icon">💰</span>
+                    <span class="reward-text">万花币 +<span id="coins-earned">50</span></span>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="next-level-button">下一关</button>
+            <button class="btn btn-secondary" id="replay-button">重玩</button>
+        </div>
+    </div>
+
+    <!-- 关卡失败弹窗 -->
+    <div id="level-failed" class="modal">
+        <div class="modal-content failed">
+            <h3>挑战失败</h3>
+            <p>别灰心，再试一次吧！</p>
+            <div class="failure-options">
+                <button class="btn btn-special" id="continue-with-ad">
+                    📺 看广告继续 (+5步)
+                </button>
+                <button class="btn btn-primary" id="retry-button">重新挑战</button>
+                <button class="btn btn-secondary" id="back-to-map-button">返回地图</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提现界面 -->
+    <div id="withdraw-screen" class="screen">
+        <div class="withdraw-header">
+            <button class="btn-back" id="withdraw-back-button">←</button>
+            <h2>万花币提现中心</h2>
+        </div>
+        <div class="withdraw-content">
+            <div class="balance-display">
+                <p>当前余额</p>
+                <span class="balance-amount" id="withdraw-balance">0</span>
+                <span class="balance-unit">万花币</span>
+            </div>
+
+            <div class="withdraw-methods">
+                <div class="method-card" data-method="alipay">
+                    <h3>💳 支付宝提现</h3>
+                    <div class="method-info">
+                        <p>最低提现: 3000万花币 (30元)</p>
+                        <p>手续费: 2%</p>
+                        <p>到账时间: 1-24小时</p>
+                    </div>
+                </div>
+
+                <div class="method-card" data-method="usdt">
+                    <h3>💰 USDT提现</h3>
+                    <div class="method-info">
+                        <p>最低提现: 10 USDT</p>
+                        <p>实时汇率: 1 USDT = <span id="usdt-rate">7.2</span>元</p>
+                        <p>手续费: 2%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 排行榜界面 -->
+    <div id="leaderboard-screen" class="screen">
+        <div class="leaderboard-header">
+            <button class="btn-back" id="leaderboard-back-button">←</button>
+            <h2>全服排行榜</h2>
+            <div class="leaderboard-tabs">
+                <button class="tab-btn active" data-tab="deep-players">深度玩家</button>
+                <button class="tab-btn" data-tab="normal-players">普通玩家</button>
+            </div>
+        </div>
+        <div class="leaderboard-content">
+            <div class="ranking-list" id="ranking-list">
+                <!-- 排行榜内容将动态生成 -->
+            </div>
+            <div class="ranking-rewards">
+                <h4>本月奖励 (每月最后一天发放)</h4>
+                <div class="reward-tiers" id="reward-tiers">
+                    <!-- 奖励等级将动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置界面 -->
+    <div id="settings-screen" class="screen">
+        <div class="settings-header">
+            <button class="btn-back" id="settings-back-button">←</button>
+            <h2>游戏设置</h2>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <h3>音频设置</h3>
+                <div class="setting-item">
+                    <label>背景音乐</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="music-toggle" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>音效</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="sfx-toggle" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>游戏设置</h3>
+                <div class="setting-item">
+                    <label>动画效果</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="animation-toggle" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>震动反馈</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="vibration-toggle" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>社交设置</h3>
+                <button class="btn btn-telegram" id="connect-telegram">
+                    📱 连接Telegram
+                </button>
+                <button class="btn btn-secondary" id="share-game">
+                    🔗 分享游戏
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script src="js/utils/constants.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/storage.js"></script>
+    <script src="js/utils/audio.js"></script>
+    <script src="js/core/game-engine.js"></script>
+    <script src="js/core/board.js"></script>
+    <script src="js/core/match-detector.js"></script>
+    <script src="js/core/special-elements.js"></script>
+    <script src="js/ui/screen-manager.js"></script>
+    <script src="js/ui/modal-manager.js"></script>
+    <script src="js/ui/level-selector.js"></script>
+    <script src="js/effects/animation-engine.js"></script>
+    <script src="js/effects/particle-system.js"></script>
+    <script src="js/effects/sound-effects.js"></script>
+    <script src="js/economy/coin-system.js"></script>
+    <script src="js/economy/withdraw-system.js"></script>
+    <script src="js/social/telegram-integration.js"></script>
+    <script src="js/social/leaderboard.js"></script>
+    <script src="js/social/sharing.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
