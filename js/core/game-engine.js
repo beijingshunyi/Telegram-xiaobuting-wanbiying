@@ -63,7 +63,12 @@ class GameEngine {
             this.board = new GameBoard(this.boardSize, this.boardSize);
             this.renderer = new GameRenderer(this.ctx, this.cellSize);
             this.inputHandler = new InputHandler(this.canvas);
-            this.effectsManager = new EffectsManager();
+            this.effectsManager = new VisualEffectsManager();
+            this.soundManager = new SoundEffectsManager();
+
+            // 初始化效果系统
+            this.effectsManager.initialize();
+            await this.soundManager.initialize();
 
             // 绑定事件
             this.bindEvents();
@@ -353,11 +358,26 @@ class GameEngine {
         // 尝试交换
         const swapResult = this.board.swapCells(fromRow, fromCol, toRow, toCol);
         if (swapResult.success) {
+            // 创建交换特效
+            const element1 = {
+                x: this.boardOffsetX + (fromCol * this.cellSize) + (this.cellSize / 2),
+                y: this.boardOffsetY + (fromRow * this.cellSize) + (this.cellSize / 2)
+            };
+            const element2 = {
+                x: this.boardOffsetX + (toCol * this.cellSize) + (this.cellSize / 2),
+                y: this.boardOffsetY + (toRow * this.cellSize) + (this.cellSize / 2)
+            };
+            this.effectsManager.createElementSwapEffect(element1, element2);
+            this.soundManager.playUISound('swap');
+
             this.moves--;
             this.updateUI();
 
             // 检查并处理消除
             this.processMatches();
+        } else {
+            // 交换失败，播放错误音效
+            this.soundManager.playUISound('error');
         }
     }
 
@@ -375,6 +395,9 @@ class GameEngine {
 
             // 处理消除和得分
             this.processMatchesScoring(matches, currentCombo);
+
+            // 创建消除特效
+            this.createMatchEffects(matches, currentCombo);
 
             // 移除匹配的元素
             this.board.removeMatches(matches);
@@ -398,6 +421,9 @@ class GameEngine {
 
             if (currentCombo >= 3) {
                 this.showComboEffect(currentCombo);
+                // 播放连击特效和音效
+                this.effectsManager.createComboEffect(currentCombo, this.canvas.width / 2, this.canvas.height / 2);
+                this.soundManager.playComboSound(currentCombo);
             }
         }
     }
@@ -411,12 +437,16 @@ class GameEngine {
             // 更新目标进度
             this.updateObjectiveProgress(match.type, match.length);
 
-            // 创建得分特效
-            this.effectsManager.createScorePopup(
-                match.centerX,
-                match.centerY,
-                comboScore
-            );
+            // 计算万花币奖励
+            const coinReward = Math.floor(comboScore / 10);
+            if (coinReward > 0 && window.coinSystem) {
+                window.coinSystem.earnCoins(coinReward, '消除奖励');
+
+                // 创建万花币特效
+                const centerX = this.boardOffsetX + this.boardWidth / 2;
+                const centerY = this.boardOffsetY + this.boardHeight / 2;
+                this.createCoinEarnEffect(coinReward, centerX, centerY);
+            }
         });
     }
 
@@ -439,6 +469,7 @@ class GameEngine {
 
         if (allObjectivesComplete) {
             this.gameState = 'LEVEL_COMPLETE';
+            this.createLevelCompleteEffects();
             this.showLevelCompleteScreen();
             return;
         }
@@ -446,6 +477,7 @@ class GameEngine {
         // 检查游戏失败
         if (this.moves <= 0 && !this.board.hasValidMoves()) {
             this.gameState = 'GAME_OVER';
+            this.createGameOverEffects();
             this.showGameOverScreen();
             return;
         }
@@ -554,6 +586,81 @@ class GameEngine {
             }
         }
         return false;
+    }
+
+    // 特效管理方法
+    createMatchEffects(matches, comboCount) {
+        matches.forEach(match => {
+            if (!match.elements || match.elements.length === 0) return;
+
+            // 计算匹配元素的屏幕坐标
+            const elements = match.elements.map(pos => ({
+                x: this.boardOffsetX + (pos.col * this.cellSize) + (this.cellSize / 2),
+                y: this.boardOffsetY + (pos.row * this.cellSize) + (this.cellSize / 2),
+                type: this.board.getElement(pos.row, pos.col).type
+            }));
+
+            // 确定匹配类型
+            let matchType = 'normal';
+            if (match.length >= 5) {
+                matchType = 'perfect';
+            } else if (match.length >= 4) {
+                matchType = 'special';
+            } else if (comboCount >= 3) {
+                matchType = 'combo';
+            }
+
+            // 创建视觉特效
+            this.effectsManager.createMatchEffect(elements, matchType);
+
+            // 播放音效
+            this.soundManager.playMatchSound(matchType, match.length);
+
+            // 如果是特殊元素组合，创建额外特效
+            if (match.isSpecialCombination) {
+                this.createSpecialCombinationEffect(match);
+            }
+        });
+    }
+
+    createSpecialCombinationEffect(match) {
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+
+        switch (match.combinationType) {
+            case 'rocket-bomb':
+                this.effectsManager.createSpecialElementEffect('cross', centerX, centerY);
+                this.soundManager.playSpecialElementSound('rocket');
+                break;
+
+            case 'bomb-rainbow':
+                this.effectsManager.createSpecialElementEffect('mega', centerX, centerY);
+                this.soundManager.playSpecialElementSound('rainbow');
+                break;
+
+            case 'double-rainbow':
+                this.effectsManager.createSpecialElementEffect('clear', centerX, centerY);
+                this.soundManager.playSpecialElementSound('rainbow');
+                break;
+
+            default:
+                this.effectsManager.createSpecialElementEffect('rocket', centerX, centerY);
+                this.soundManager.playSpecialElementSound('rocket');
+        }
+    }
+
+    createCoinEarnEffect(amount, x, y) {
+        this.effectsManager.createCoinRewardEffect(amount, x || this.canvas.width / 2, y || this.canvas.height / 2);
+        this.soundManager.playCoinSound(amount);
+    }
+
+    createLevelCompleteEffects() {
+        this.effectsManager.createLevelCompleteEffect();
+        this.soundManager.playGameStateSound('level_complete');
+    }
+
+    createGameOverEffects() {
+        this.soundManager.playGameStateSound('game_over');
     }
 
     // 工具方法
