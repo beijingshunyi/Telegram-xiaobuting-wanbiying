@@ -58,9 +58,9 @@ class GameApp {
         }
 
         // 初始化音频管理器
-        if (typeof AudioManager !== 'undefined') {
-            this.audioManager = new AudioManager();
-            await this.audioManager.init();
+        if (window.audioManager) {
+            this.audioManager = window.audioManager;
+            await this.audioManager.initialize();
             this.updateLoadingProgress(40, '加载音频系统...');
         }
 
